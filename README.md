@@ -10,6 +10,6 @@ git clone https://github.com/bmikailenko/accelerator.git
 Navigate into desired folder to follow instructions.
 
 ## Folders
-accelerator_stratix - Code for Stratix fpga
-accelerator_agilex  - Code for Agilex fpga
+accelerator_stratix - Code for Stratix 10 fpga
+accelerator_arria   - Code for Arria 10 fpga
 accelerator_cpu     - Code for CPU
