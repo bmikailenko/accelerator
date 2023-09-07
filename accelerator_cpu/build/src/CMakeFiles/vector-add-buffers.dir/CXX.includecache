@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/u192003/oneAPI-samples/DirectProgramming/C++SYCL/DenseLinearAlgebra/accelerator_cpu/src/vector-add-buffers.cpp
+sycl/sycl.hpp
+-
+vector
+-
+iostream
+-
+string
+-
+sycl/ext/intel/fpga_extensions.hpp
+-
+
