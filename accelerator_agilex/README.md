@@ -18,16 +18,6 @@
 > When using the hardware compile flow, Intel® Quartus® Prime Pro Edition must be installed and accessible through your PATH.
 > **Warning** Make sure you add the device files associated with the FPGA that you are targeting to your Intel® Quartus® Prime installation.
 
-## Key Implementation Details
-
-The basic SYCL implementation explained in the code includes device selector, USM, buffer, accessor, kernel, and command groups.
-
-The code attempts to execute on an available GPU and fallback to the system CPU if a compatible GPU is not detected. If successful, the name of the offload device and a success message is displayed, which indicates your development environment is set up correctly.
-
-In addition, you can target an FPGA device using the instructions provided below. If you do not have FPGA hardware, the sample will run in emulation mode, which includes static optimization reports for design analysis.
-
-> **Note**: For comprehensive information about oneAPI programming, see the [Intel® oneAPI Programming Guide](https://software.intel.com/en-us/oneapi-programming-guide). (Use search or the table of contents to find relevant information quickly.)
-
 ## Set Environment Variables
 
 When working with the command-line interface (CLI), you should configure the oneAPI toolkits using environment variables. Set up your CLI environment by sourcing the `setvars` script every time you open a new terminal window. This practice ensures that your compiler, libraries, and tools are ready for development.
