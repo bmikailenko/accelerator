@@ -1,0 +1,488 @@
+//==============================================================
+// Vector Add is the equivalent of a Hello, World! sample for data parallel
+// programs. Building and running the sample verifies that your development
+// environment is setup correctly and demonstrates the use of the core features
+// of SYCL. This sample runs on both CPU and GPU (or FPGA). When run, it
+// computes on both the CPU and offload device, then compares results. If the
+// code executes on both CPU and offload device, the device name and a success
+// message are displayed. And, your development environment is setup correctly!
+//
+// For comprehensive instructions regarding SYCL Programming, go to
+// https://software.intel.com/en-us/oneapi-programming-guide and search based on
+// relevant terms noted in the comments.
+//
+// SYCL material used in the code sample:
+// •	A one dimensional array of data.
+// •	A device queue, buffer, accessor, and kernel.
+//==============================================================
+// Copyright © Intel Corporation
+//
+// SPDX-License-Identifier: MIT
+// =============================================================
+#include <sycl/sycl.hpp>
+#include <vector>
+#include <iostream>
+#include <string>
+#if FPGA_HARDWARE || FPGA_EMULATOR || FPGA_SIMULATOR
+#include <sycl/ext/intel/fpga_extensions.hpp>
+#endif
+
+// Determine if help message needs to print
+bool help = false;
+
+// Max filename string legth
+constexpr int kMaxStringLen = 40;
+
+using namespace sycl;
+
+////////////////////////////////////////////////////////////////////////////////
+// File I/O
+bool ReadInputData(std::string infilename, std::vector<std::vector<int>> &indata);
+bool WriteOutputData(std::string outfilename, std::vector<std::vector<int>> &outdata);
+////////////////////////////////////////////////////////////////////////////////
+
+// num_repetitions: How many times to repeat the kernel invocation
+size_t num_repetitions = 1;
+// Vector type and data size for this example.
+size_t vector_size = 10000;
+typedef std::vector<int> IntVector; 
+
+// Create an exception handler for asynchronous SYCL exceptions
+static auto exception_handler = [](sycl::exception_list e_list) {
+  for (std::exception_ptr const &e : e_list) {
+    try {
+      std::rethrow_exception(e);
+    }
+    catch (std::exception const &e) {
+#if _DEBUG
+      std::cout << "Failure" << std::endl;
+#endif
+      std::terminate();
+    }
+  }
+};
+
+/*
+struct VectorFlip
+{
+	int *const a_in;
+	int *const b_out;
+	int len;
+
+	void operator()() const
+	{
+		int a_idx;
+		for (int b_idx = 0; b_idx < len; b_idx++)
+		{
+			a_idx = len - b_idx - 1;
+			int a_val = a_in[a_idx];
+			b_out[b_idx] = a_val;
+		}
+	}
+};
+*/
+
+//************************************
+// Vector add in SYCL on device: returns sum in 4th parameter "sum_parallel".
+//************************************
+void VectorAdd(queue &q, const IntVector &a_vector, const IntVector &b_vector,
+               IntVector &sum_parallel) {
+  // Create the range object for the vectors managed by the buffer.
+  range<1> num_items{a_vector.size()};
+
+  // Create buffers that hold the data shared between the host and the devices.
+  // The buffer destructor is responsible to copy the data back to host when it
+  // goes out of scope.
+  buffer a_buf(a_vector);
+  buffer b_buf(b_vector);
+  buffer sum_buf(sum_parallel.data(), num_items);
+
+  for (size_t i = 0; i < num_repetitions; i++ ) {
+
+    // Submit a command group to the queue by a lambda function that contains the
+    // data access permission and device computation (kernel).
+    q.submit([&](handler &h) {
+      // Create an accessor for each buffer with access permission: read, write or
+      // read/write. The accessor is a mean to access the memory in the buffer.
+      accessor a(a_buf, h, read_only);
+      accessor b(b_buf, h, read_only);
+  
+      // The sum_accessor is used to store (with write permission) the sum data.
+      accessor sum(sum_buf, h, write_only, no_init);
+  
+      // Use parallel_for to run vector addition in parallel on device. This
+      // executes the kernel.
+      //    1st parameter is the number of work items.
+      //    2nd parameter is the kernel, a lambda that specifies what to do per
+      //    work item. The parameter of the lambda is the work item id.
+      // SYCL supports unnamed lambda kernel by default.
+      h.parallel_for(num_items, [=](auto i) { sum[i] = a[i] + b[i]; });
+    });
+  };
+  // Wait until compute tasks on GPU done
+  q.wait();
+}
+
+void VectorFlip(queue &q, const std::vector<int> &a_vector, std::vector<int> &b_vector) {
+  // Create the range object for the vectors managed by the buffer.
+  range<1> num_items{a_vector.size()};
+  int len = a_vector.size();
+
+  // Create buffers that hold the data shared between the host and the devices.
+  // The buffer destructor is responsible to copy the data back to host when it
+  // goes out of scope.
+  buffer a_buf(a_vector);
+//  buffer b_buf(b_vector);
+  buffer b_buf(b_vector.data(), num_items);
+
+  for (size_t i = 0; i < num_repetitions; i++ ) {
+
+    // Submit a command group to the queue by a lambda function that contains the
+    // data access permission and device computation (kernel).
+    q.submit([&](handler &h) {
+      // Create an accessor for each buffer with access permission: read, write or
+      // read/write. The accessor is a mean to access the memory in the buffer.
+      accessor a(a_buf, h, read_only);
+//      accessor b(b_buf, h, read_only);
+  
+      // The sum_accessor is used to store (with write permission) the sum data.
+      accessor b(b_buf, h, write_only, no_init);
+  
+      // Use parallel_for to run vector addition in parallel on device. This
+      // executes the kernel.
+      //    1st parameter is the number of work items.
+      //    2nd parameter is the kernel, a lambda that specifies what to do per
+      //    work item. The parameter of the lambda is the work item id.
+      // SYCL supports unnamed lambda kernel by default.
+      h.parallel_for(num_items, [=](auto i) { b[i] = a[len-i-1]; });
+    });
+  };
+  // Wait until compute tasks on GPU done
+  q.wait();
+}
+
+//************************************
+// Initialize the vector from 0 to vector_size - 1
+//************************************
+void InitializeVector(IntVector &a) {
+  for (size_t i = 0; i < a.size(); i++) a.at(i) = i;
+}
+
+void Help(void)
+{
+	// Command line arguments.
+	// accelerator [command] -i=[input file] -o=[output file]
+	// -h, --help
+
+	// future options?
+	// -p,performance : output perf metrics
+
+	std::cout << "accelerator [command] -i=<input file> -o=<output file>\n";
+	std::cout << "  -h,--help                                : this help text\n";
+	std::cout << "  [command]                                                \n";
+	std::cout << "  	flip                             : flip vectors  \n";
+}
+
+bool FindGetArg(std::string &arg, const char *str, int defaultval, int *val)
+{
+	std::size_t found = arg.find(str, 0, strlen(str));
+	if (found != std::string::npos)
+	{
+		int value = atoi(&arg.c_str()[strlen(str)]);
+		*val = value;
+		return true;
+	}
+	return false;
+}
+
+bool FindGetArgString(std::string &arg, const char *str, char *str_value, size_t maxchars)
+{
+	std::size_t found = arg.find(str, 0, strlen(str));
+	if (found != std::string::npos)
+	{
+		const char *sptr = &arg.c_str()[strlen(str)];
+		for (int i = 0; i < maxchars - 1; i++)
+		{
+			char ch = sptr[i];
+			switch (ch)
+			{
+				case ' ':
+				case '\t':
+				case '\0':
+					str_value[i] = 0;
+					return true;
+					break;
+				default:
+					str_value[i] = ch;
+					break;
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+//************************************
+// Demonstrate vector add both in sequential on CPU and in parallel on device.
+//************************************
+int main(int argc, char* argv[]) {
+
+  char out_file_str_buffer[kMaxStringLen] = {0};
+  char in_file_str_buffer[kMaxStringLen] = {0};
+  std::vector<std::vector<int>> outdata;
+  std::vector<std::vector<int>> indata;
+  std::string outfilename = "";
+  std::string infilename = "";
+  std::string command = "";
+/*
+  // Change num_repetitions if it was passed as argument
+  if (argc > 2) num_repetitions = std::stoi(argv[2]);
+  // Change vector_size if it was passed as argument
+  if (argc > 1) vector_size = std::stoi(argv[1]);
+*/
+  
+  // Create device selector for the device of your interest.
+#if FPGA_EMULATOR
+  // Intel extension: FPGA emulator selector on systems without FPGA card.
+  auto selector = sycl::ext::intel::fpga_emulator_selector_v;
+#elif FPGA_SIMULATOR
+  // Intel extension: FPGA simulator selector on systems without FPGA card.
+  auto selector = sycl::ext::intel::fpga_simulator_selector_v;
+#elif FPGA_HARDWARE
+  // Intel extension: FPGA selector on systems with FPGA card.
+  auto selector = sycl::ext::intel::fpga_selector_v;
+#else
+  // The default device selector will select the most performant device.
+  auto selector = default_selector_v;
+#endif
+
+	bool passed = true;
+
+	// Check the number of arguments specified
+	if (argc != 4)
+	{
+		std::cerr << "Incorrect number of arguments. Correct usage: "
+			  << argv[0]
+			  << " [command] -i=<input-file> -o=<output-file>"
+			  << std::endl;
+		return 1;
+	}
+
+	for (int i = 1; i < argc; i++)
+	{
+		if (argv[i][0] == '-')
+		{
+			std::string sarg(argv[i]);
+			if (std::string(argv[i]) == "-h")
+			{
+				help = true;
+			}
+			if (std::string(argv[i]) == "--help")
+			{
+				help = true;
+			}
+
+			FindGetArgString(sarg, "-i=", in_file_str_buffer, kMaxStringLen);
+			FindGetArgString(sarg, "-in=", in_file_str_buffer, kMaxStringLen);
+			FindGetArgString(sarg, "--input-file=", in_file_str_buffer, kMaxStringLen);
+			FindGetArgString(sarg, "-o=", out_file_str_buffer, kMaxStringLen);
+			FindGetArgString(sarg, "-out=", out_file_str_buffer, kMaxStringLen);
+			FindGetArgString(sarg, "--output-file=", out_file_str_buffer, kMaxStringLen);
+		} 
+		else
+		{
+			command = std::string(argv[i]);
+		}
+	}
+
+	if (help)
+	{
+		Help();
+		return 1;
+	}
+
+	infilename = std::string(in_file_str_buffer);
+	outfilename = std::string(out_file_str_buffer);
+	std::cout << "Command: " << command
+		  << ", input file: " << infilename
+		  << ", output file: " << outfilename
+		  << std::endl;
+
+/*
+  // Create vector objects with "vector_size" to store the input and output data.
+  IntVector a, b, sum_sequential, sum_parallel;
+  a.resize(vector_size);
+  b.resize(vector_size);
+  sum_sequential.resize(vector_size);
+  sum_parallel.resize(vector_size);
+
+  // Initialize input vectors with values from 0 to vector_size - 1
+  InitializeVector(a);
+  InitializeVector(b);
+*/
+
+  try {
+    queue q(selector, exception_handler);
+
+    // Print out the device information used for the kernel code.
+    std::cout << "Running on device: "
+              << q.get_device().get_info<info::device::name>() << "\n";
+ //   std::cout << "Vector size: " << a.size() << "\n";
+		passed &= ReadInputData(infilename, indata);
+		if (!passed)
+			std::terminate();
+
+		std::cout << "Finished reading data\n";
+
+
+		if (command.compare("flip") == 0)
+		{
+			std::cout << "Performing vector flip\n";
+//			int kVectSize;
+			for (auto &row: indata)
+			{
+				std::vector<int> v;
+				v.resize(row.size());
+//				kVectSize = row.size();
+				std::cout << "In vector:";
+				for (auto i: row)
+					std::cout << i << ",";
+				std::cout << "\n";
+				VectorFlip(q, row, v);
+				std::cout << "Out vector:";
+				for (auto i: v)
+					std::cout << i << ",";
+				std::cout << "\n";
+				outdata.push_back(v);
+//				int *a = sycl::malloc_shared<int>(kVectSize, q);
+//				int *b = sycl::malloc_shared<int>(kVectSize, q);
+
+//				for (int i = 0; i < kVectSize; i++)
+//				{
+//					a[i] = row[i];
+//				}
+
+//				q.single_task<AcceleratorID> (VectorFlip{a, b, kVectSize}).wait();
+
+//				for (int i = 0; i < kVectSize; i++)
+//					v.push_back(b[i]);
+//				outdata.push_back(v);
+
+//				free(a, q);
+//				free(b, q);
+
+			}
+		}
+
+		passed &= WriteOutputData(outfilename, outdata);
+		if (!passed)
+			std::terminate();
+
+    // Vector addition in SYCL
+//    VectorAdd(q, a, b, sum_parallel);
+  } catch (exception const &e) {
+    std::cout << "An exception is caught for vector add.\n";
+    std::terminate();
+  }
+
+ /*
+  // Compute the sum of two vectors in sequential for validation.
+  for (size_t i = 0; i < sum_sequential.size(); i++)
+    sum_sequential.at(i) = a.at(i) + b.at(i);
+
+  // Verify that the two vectors are equal.  
+  for (size_t i = 0; i < sum_sequential.size(); i++) {
+    if (sum_parallel.at(i) != sum_sequential.at(i)) {
+      std::cout << "Vector add failed on device.\n";
+      return -1;
+    }
+  }
+
+  int indices[]{0, 1, 2, (static_cast<int>(a.size()) - 1)};
+  constexpr size_t indices_size = sizeof(indices) / sizeof(int);
+
+  // Print out the result of vector add.
+  for (int i = 0; i < indices_size; i++) {
+    int j = indices[i];
+    if (i == indices_size - 1) std::cout << "...\n";
+    std::cout << "[" << j << "]: " << a[j] << " + " << b[j] << " = "
+              << sum_parallel[j] << "\n";
+  }
+
+  a.clear();
+  b.clear();
+  sum_sequential.clear();
+  sum_parallel.clear();
+*/
+
+  std::cout << "Vector add successfully completed on device.\n";
+  return 0;
+}
+
+bool ReadInputData(std::string infilename, std::vector<std::vector<int>> &indata)
+{
+	std::string infilepath = "../in/" + infilename;
+	std::string line, val;
+
+	std::cout << "Reading data from '" << infilepath << "'" << std::endl;
+
+	std::ifstream infile_is;
+	infile_is.open(infilepath);
+	if(infile_is.fail())
+	{
+		std::cerr << "Failed to open '" << infilepath << "'" << std::endl;
+		return false;
+	}
+
+	while(std::getline(infile_is, line))
+	{
+		std::vector<int> v;
+		std::stringstream s (line);
+		while (getline(s, val, ',')) {
+			v.push_back(std::stoi(val));
+			std::cout << val << ",";
+		}
+		std::cout << std::endl;
+		indata.push_back(v);
+	}
+
+	infile_is.close();
+
+	return true;
+}
+
+
+bool WriteOutputData(std::string outfilename, std::vector<std::vector<int>> &outdata)
+{
+	std::string outfilepath = "../out/" + outfilename;
+	std::string line, val;
+	int i;
+
+	std::cout << "Writing data to '" << outfilepath << "'" << std::endl;
+
+	std::ofstream outfile_os;
+	outfile_os.open(outfilepath);
+	if(outfile_os.fail())
+	{
+		std::cerr << "Failed to open '" << outfilepath << "'" << std::endl;
+		return false;
+	}
+
+	for (auto &row : outdata)
+	{
+		if (row.size() == 1)
+		{
+			outfile_os << row[0] << '\n';
+		}
+		else
+		{
+			for (i = 0; i < (row.size() - 1); i++)
+				outfile_os << row[i] << ',';
+			outfile_os << row[i] << '\n';
+		}
+	}
+
+	outfile_os.close();
+
+	return true;
+}

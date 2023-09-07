@@ -1,0 +1,217 @@
+#include <sycl/sycl.hpp>
+#include <vector>
+#include <iostream>
+#include <string>
+#if FPGA_HARDWARE || FPGA_EMULATOR || FPGA_SIMULATOR
+#include <sycl/ext/intel/fpga_extensions.hpp>
+#endif
+#include "io.hpp"
+#include "util.hpp"
+
+#define ELEMENTS_PER_DDR_ACCESS 16
+
+bool help = false;                      // If help message needs to print
+constexpr int kMaxStringLen = 40;       // Max filename string legth
+template <int N> class KernelCompute;   // Forward declare kernel name
+size_t num_repetitions = 1;             // Times to repeat kernel outer loop
+size_t inner_loops = 1;                 // Times to repeat kernel innter loop
+using namespace sycl;                   // SYCL namespace
+
+typedef std::vector<std::vector<int>> Vector2D;
+
+void VectorFlip(queue &q, const Vector2D &a_vector, Vector2D &b_vector) {
+    std::vector<size_t> inner_loops_interm;
+    size_t width = a_vector[0].size();
+    size_t rows = a_vector.size();
+    std::vector<int> a_0_interm;
+    std::vector<int> a_1_interm;
+    std::vector<int> b_0_interm;
+    std::vector<int> b_1_interm;
+
+    for (size_t i = 0; i < rows/2; i++) {
+        for (size_t j = 0; j < width; j++) {
+            a_0_interm.push_back(a_vector[i][j]);
+            a_1_interm.push_back(a_vector[i+(rows/2)][j]);
+        }
+    }
+
+    if (rows % 2 != 0) {
+        for (size_t j = 0; j < width; j++) {
+            a_1_interm.push_back(a_vector[rows-1][j]);
+        }
+    }
+
+    b_0_interm.resize(a_0_interm.size());
+    b_1_interm.resize(a_1_interm.size());
+    buffer a_0_buf(a_0_interm, {property::buffer::mem_channel{1}});
+    buffer a_1_buf(a_1_interm, {property::buffer::mem_channel{2}});
+    buffer b_0_buf(b_0_interm, {property::buffer::mem_channel{3}});
+    buffer b_1_buf(b_1_interm, {property::buffer::mem_channel{4}});
+//    size_t inner_loops_local = inner_loops;
+    auto start_time_compute_verbose = std::chrono::high_resolution_clock::now();
+
+    for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
+
+        q.submit([ & ](handler & h) {
+
+            accessor a_0(a_0_buf, h, read_only);
+            accessor a_1(a_1_buf, h, read_only);
+            accessor b_0(b_0_buf, h, write_only, no_init);
+            accessor b_1(b_1_buf, h, write_only, no_init);
+
+            h.single_task<class KernelCompute<3>>([=]()
+                [[intel::kernel_args_restrict]] {
+
+                size_t iters_per_row = (width / ELEMENTS_PER_DDR_ACCESS) +
+                                       ((width % ELEMENTS_PER_DDR_ACCESS == 0) ? 0 : 1);
+
+//                [[intel::loop_coalesce(3)]]
+                for (size_t iter = 0; iter < iters_per_row; iter++) {
+                    for (size_t row = 0; row < rows/2; row++) {
+                        #pragma unroll
+                        for (size_t col = 0; col < ELEMENTS_PER_DDR_ACCESS; col++) {
+                            size_t idx = iter * ELEMENTS_PER_DDR_ACCESS + col;
+                            if (idx < width) {
+                                b_0[(row * width) + idx] = a_0[(row * width) + (width - 1) - idx];
+                                b_1[(row * width) + idx] = a_1[(row * width) + (width - 1) - idx];
+                            }
+                        }
+                    }
+                }
+//                [[intel::loop_coalesce(2)]]
+                for (size_t iter = 0; iter < iters_per_row; iter++) {
+                    if (rows % 2 != 0) {
+                        for (size_t col = 0; col < ELEMENTS_PER_DDR_ACCESS; col++) {
+                            size_t idx = iter * ELEMENTS_PER_DDR_ACCESS + col;
+                            if (idx < width) {
+                                b_1[((rows/2) * width) + idx] = a_1[((rows/2) * width) + (width - 1) - idx];
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    q.wait();
+
+    auto end_time_compute_verbose = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> process_time_compute_verbose(end_time_compute_verbose - start_time_compute_verbose);
+    std::cout << "Computation was " << process_time_compute_verbose.count() << " milliseconds\n";
+
+    for (size_t i = 0; i < rows/2; i++) {
+        for (size_t j = 0; j < width; j++) {
+            b_vector[i][j] = b_0_interm[(i*width)+j];
+            b_vector[i+(rows/2)][j] = b_1_interm[(i*width)+j];
+        }
+    }
+
+    if (rows % 2 != 0) {
+        for (size_t j = 0; j < width; j++) {
+            b_vector[rows-1][j] = b_1_interm[((rows/2)*width)+j];
+        }
+    }
+}
+
+//************************************
+// Demonstrate vector add both in sequential on CPU and in parallel on device.
+//************************************
+int main(int argc, char * argv[]) {
+    char out_file_str_buffer[kMaxStringLen] = {0};
+    char in_file_str_buffer[kMaxStringLen] = {0};
+    Vector2D outdata;
+    Vector2D indata;
+    std::string outfilename = "";
+    std::string infilename = "";
+    std::string command = "";
+
+    // Create device selector for the device of your interest.
+    #if FPGA_EMULATOR
+    // Intel extension: FPGA emulator selector on systems without FPGA card.
+    auto selector = sycl::ext::intel::fpga_emulator_selector_v;
+    #elif FPGA_SIMULATOR
+    // Intel extension: FPGA simulator selector on systems without FPGA card.
+    auto selector = sycl::ext::intel::fpga_simulator_selector_v;
+    #elif FPGA_HARDWARE
+    // Intel extension: FPGA selector on systems with FPGA card.
+    auto selector = sycl::ext::intel::fpga_selector_v;
+    #else
+    // The default device selector will select the most performant device.
+    auto selector = default_selector_v;
+    #endif
+
+    bool passed = true;
+
+    // Argument processing
+    if(argc != 6) {
+        std::cerr << "Incorrect number of arguments. Correct usage: "
+              << argv[0]
+              << " [command] -i=<input file> -o=<output file> <# outer loops> <# inner loops>"
+              << std::endl;
+        return 1;
+    }
+
+    for(int i = 1; i < argc-2; i++) {
+        if(argv[i][0] == '-') {
+            std::string sarg(argv[i]);
+            if(std::string(argv[i]) == "-h") {
+                help = true;
+            }
+            if(std::string(argv[i]) == "--help") {
+                help = true;
+            }
+            FindGetArgString(sarg, "-i=", in_file_str_buffer, kMaxStringLen);
+            FindGetArgString(sarg, "-in=", in_file_str_buffer, kMaxStringLen);
+            FindGetArgString(sarg, "--input-file=", in_file_str_buffer, kMaxStringLen);
+            FindGetArgString(sarg, "-o=", out_file_str_buffer, kMaxStringLen);
+            FindGetArgString(sarg, "-out=", out_file_str_buffer, kMaxStringLen);
+            FindGetArgString(sarg, "--output-file=", out_file_str_buffer, kMaxStringLen);
+        } else {
+            command = std::string(argv[i]);
+        }
+    }
+
+    if(help) {
+        Help();
+        return 1;
+    }
+
+    num_repetitions = atoi(argv[4]);
+    inner_loops = atoi(argv[5]);
+    infilename = std::string(in_file_str_buffer);
+    outfilename = std::string(out_file_str_buffer);
+
+    std::cout << "Command: " << command << ", input file: " << infilename << ", output file: " << outfilename << std::endl;
+
+    try {
+        queue q(selector, exception_handler);
+
+        std::cout << "Running on device: " << q.get_device().get_info < info::device::name > () << "\n";
+
+        auto start_time = std::chrono::high_resolution_clock::now();
+
+        passed &= ReadInputData(infilename, indata);
+        if(!passed)
+            std::terminate();
+
+        if(command.compare("flip") == 0) {
+            outdata = create_blank_2d_vector(indata);
+            std::cout << "Preforming data flip\n";
+            VectorFlip(q, indata, outdata);
+        }
+
+        passed &= WriteOutputData(outfilename, outdata);
+        if(!passed)
+            std::terminate();
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> process_time(end_time - start_time);
+            std::cout << "Computation and I/O was " << process_time.count() << " milliseconds\n";
+
+    } catch (exception const & e) {
+        std::cout << "An exception is caught for vector add.\n";
+        std::terminate();
+    }
+    std::cout << "Vector add successfully completed on device.\n";
+    return 0;
+}

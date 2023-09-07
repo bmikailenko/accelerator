@@ -1,0 +1,43 @@
+
+########################################################################
+#      Date:           Thu 20 Jul 2023 10:42:29 AM PDT
+#    Job ID:           2346416.v-qsvr-1.aidevcloud
+#      User:           u192003
+# Resources:           cput=75:00:00,neednodes=1:xeon:ppn=2,nodes=1:xeon:ppn=2,walltime=06:00:00
+########################################################################
+
+ 
+:: WARNING: setvars.sh has already been run. Skipping re-execution.
+   To force a re-execution of setvars.sh, use the '--force' option.
+   Using '--force' can result in excessive use of your environment variables.
+  
+usage: source setvars.sh [--force] [--config=file] [--help] [...]
+  --force        Force setvars.sh to re-run, doing so may overload environment.
+  --config=file  Customize env vars using a setvars.sh configuration file.
+  --help         Display this help message and exit.
+  ...            Additional args are passed to individual env/vars.sh scripts
+                 and should follow this script's arguments.
+  
+  Some POSIX shells do not accept command-line options. In that case, you can pass
+  command-line options via the SETVARS_ARGS environment variable. For example:
+  
+  $ SETVARS_ARGS="ia32 --config=config.txt" ; export SETVARS_ARGS
+  $ . path/to/setvars.sh
+  
+  The SETVARS_ARGS environment variable is cleared on exiting setvars.sh.
+  
+Command: flip, input file: data_in_10k_10k.csv, output file: data_out_10k_10k_cpu.csv
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Reading data from '../in/data_in_10k_10k.csv'
+Preforming data flip
+Verbose computation was 307489 milliseconds
+Writing data to '../out/data_out_10k_10k_cpu.csv'
+Computation was 308692 milliseconds
+Computation and I/O was 321530 milliseconds
+Vector add successfully completed on device.
+
+########################################################################
+# End of output for job 2346416.v-qsvr-1.aidevcloud
+# Date: Thu 20 Jul 2023 10:47:58 AM PDT
+########################################################################
+
