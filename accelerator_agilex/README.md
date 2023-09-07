@@ -22,7 +22,7 @@
 
 When working with the command-line interface (CLI), you should configure the oneAPI toolkits using environment variables. Set up your CLI environment by sourcing the `setvars` script every time you open a new terminal window. This practice ensures that your compiler, libraries, and tools are ready for development.
 
-## Build the `Base: Vector Add` Sample
+## CLI Setup
 
 > **Note**: If you have not already done so, set up your CLI
 > environment by sourcing  the `setvars` script in the root of your oneAPI installation.
@@ -42,35 +42,12 @@ When working with the command-line interface (CLI), you should configure the one
 
 #### Configure the build system
 
-1. Change to the sample directory.
-2. 
-   Configure the project to use the buffer-based implementation. This should already be included in the repo.
+1. Change to the project directory.
+2. Configure the project to use the buffer-based implementation. This should already be included in the repo.
    ```
-   mkdir build
    cd build
-   cmake ..
+   cmake .. -DFPGA_DEVICE=/opt/intel/oneapi/intel_a10gx_pac
    ```
-   or
-
-   Configure the project to use the Unified Shared Memory (USM) based implementation (unused in this repo since USM isn't on DevCloud. But useful to know).
-   ```
-   mkdir build
-   cd build
-   cmake .. -DUSM=1
-   ```
-
-   > **Note**: When building for FPGAs, the default FPGA family will be used (Intel® Agilex®).
-   > You can change the default target by using the command:
-   >  ```
-   >  cmake .. -DFPGA_DEVICE=/opt/intel/oneapi/intel_a10gx_pac
-   >  ``` 
-   >
-   > Alternatively, you can target an explicit FPGA board variant and BSP by using the following command (we don't use this): 
-   >  ```
-   >  cmake .. -DFPGA_DEVICE=<board-support-package>:<board-variant>
-   >  ``` 
-   >
-   > You will only be able to run an executable on the FPGA if you specified a BSP.
 
 #### Build for CPU and GPU
     
@@ -127,25 +104,6 @@ make VERBOSE=1
 ```
 If you receive an error message, troubleshoot the problem using the **Diagnostics Utility for Intel® oneAPI Toolkits**. The diagnostic utility provides configuration and system checks to help find missing dependencies, permissions errors, and other issues. See the [Diagnostics Utility for Intel® oneAPI Toolkits User Guide](https://www.intel.com/content/www/us/en/develop/documentation/diagnostic-utility-user-guide/top.html) for more information on using the utility.
 
-
-## Run the program
-
-### Configurable Parameters
-
-The source files (`vector-add-buffers.cpp`).
-
-### On Linux
-
-#### Run for CPU and GPU
-
-1. Change to the output directory.
-
-2. Run the program for Unified Shared Memory (USM) and buffers.
-    ```
-    ./vector-add-buffers
-    ./vector-add-usm
-    ```
-
 ### Build and Run in Intel® DevCloud
 
 When running a sample in the Intel® DevCloud, you must specify the compute node (CPU, GPU, FPGA) and whether to run in batch or interactive mode.
@@ -192,9 +150,3 @@ Writing data to '../out/data_out_10k_10k_fpga.csv'
 Computation and I/O was 18407.9 milliseconds
 Vector add successfully completed on device.
 ```
-
-## License
-
-Code samples are licensed under the MIT license. See [License.txt](https://github.com/oneapi-src/oneAPI-samples/blob/master/License.txt) for details.
-
-Third-party program Licenses can be found here: [third-party-programs.txt](https://github.com/oneapi-src/oneAPI-samples/blob/master/third-party-programs.txt).
