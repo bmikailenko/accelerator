@@ -1,24 +1,4 @@
-# `Base: Vector Add` Sample
-
-The `Base: Vector Add` is the equivalent of a **Hello, World!** sample for data parallel programs, so the sample code demonstrates some core features of SYCL*. Additionally, building and running this sample verifies that your development environment is configured correctly for [Intel® oneAPI Toolkits](https://www.intel.com/content/www/us/en/developer/tools/oneapi/toolkits.html).
-
-| Area                     | Description
-|:---                      |:---
-| What you will learn      | How to begin using SYCL* to offload computations to CPUs and accelerators
-| Time to complete         | ~15 minutes
-| Category                 | Getting Started
-
-## Purpose
-
-The `Base: Vector Add` is a relatively simple program that adds two large vectors of integers and verifies the results. This program uses C++ and SYCL* for Intel® CPU and accelerators. By reviewing the code in this sample, you can learn how to use C++ code to offload computations to a GPU. This includes using Unified Shared Memory (USM) and buffers.
-
-- USM requires an explicit wait for the asynchronous computation on the kernel to complete.
-
-- When they go out of scope, buffers synchronize main memory with device memory implicitly; an explicit wait on the event is not required.
-
-This sample provides example implementations of both Unified Shared Memory (USM) and buffers for side-by-side comparison.
-
->**Note**: See the `Simple Add` sample to examine another getting started sample you can use to learn more about using the Intel® oneAPI Toolkits to develop SYCL-compliant applications for CPU, GPU, and FPGA devices.
+# `Accelerator`
 
 ## Prerequisites
 
@@ -68,28 +48,13 @@ When working with the command-line interface (CLI), you should configure the one
 >
 > For more information on configuring environment variables, see [Use the setvars Script with Linux* or macOS*](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-programming-guide/top/oneapi-development-environment-setup/use-the-setvars-script-with-linux-or-macos.html) or [Use the setvars Script with Windows*](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-programming-guide/top/oneapi-development-environment-setup/use-the-setvars-script-with-windows.html).
 
-
-### Using Visual Studio Code* (VS Code) (Optional)
-
-You can use Visual Studio Code* (VS Code) extensions to set your environment,
-create launch configurations, and browse and download samples.
-
-The basic steps to build and run a sample using VS Code include:
-1. Configure the oneAPI environment with the extension **Environment Configurator for Intel® oneAPI Toolkits**.
-2. Download a sample using the extension **Code Sample Browser for Intel® oneAPI Toolkits**.
-3. Open a terminal in VS Code (**Terminal > New Terminal**).
-4. Run the sample in the VS Code terminal using the instructions below.
-
-To learn more about the extensions and how to configure the oneAPI environment, see the 
-[Using Visual Studio Code with Intel® oneAPI Toolkits User Guide](https://www.intel.com/content/www/us/en/develop/documentation/using-vs-code-with-intel-oneapi/top.html).
-
 ### On Linux*
 
 #### Configure the build system
 
 1. Change to the sample directory.
 2. 
-   Configure the project to use the buffer-based implementation.
+   Configure the project to use the buffer-based implementation. This should already be included in the repo.
    ```
    mkdir build
    cd build
@@ -97,7 +62,7 @@ To learn more about the extensions and how to configure the oneAPI environment, 
    ```
    or
 
-   Configure the project to use the Unified Shared Memory (USM) based implementation.
+   Configure the project to use the Unified Shared Memory (USM) based implementation (unused in this repo since USM isn't on DevCloud. But useful to know).
    ```
    mkdir build
    cd build
@@ -107,10 +72,10 @@ To learn more about the extensions and how to configure the oneAPI environment, 
    > **Note**: When building for FPGAs, the default FPGA family will be used (Intel® Agilex®).
    > You can change the default target by using the command:
    >  ```
-   >  cmake .. -DFPGA_DEVICE=<FPGA device family or FPGA part number>
+   >  cmake .. -DFPGA_DEVICE=/opt/intel/oneapi/intel_a10gx_pac
    >  ``` 
    >
-   > Alternatively, you can target an explicit FPGA board variant and BSP by using the following command: 
+   > Alternatively, you can target an explicit FPGA board variant and BSP by using the following command (we don't use this): 
    >  ```
    >  cmake .. -DFPGA_DEVICE=<board-support-package>:<board-variant>
    >  ``` 
@@ -132,101 +97,35 @@ To learn more about the extensions and how to configure the oneAPI environment, 
 
 1. Compile for FPGA emulation.
    ```
+   qsub -l nodes=1:fpga_compile:ppn=2 -d .
    make fpga_emu
+   exit
    ```
 2. Compile for simulation (fast compile time, targets simulator FPGA device):
    ```
+   qsub -l nodes=1:fpga_compile:ppn=2 -d .
    make fpga_sim
+   exit
    ```
 3. Generate HTML performance reports.
    ```
+   qsub -l nodes=1:fpga_compile:ppn=2 -d .
    make report
+   exit
    ```
    The reports reside at `simple-add_report.prj/reports/report.html`.
 
 4. Compile the program for FPGA hardware. (Compiling for hardware can take a long
 time.)
    ```
+   qsub -l nodes=1:fpga_compile:ppn=2 -d . -b build.sh
    make fpga
+   watch -n 1 qstat -n -1 (this is to view build progress and status)
    ```
 
 5. Clean the program. (Optional)
    ```
    make clean
-   ```
-
-### On Windows*
-
-#### Configure the build system
-
-1. Change to the sample directory.
-2. 
-   Configure the project to use the buffer-based implementation.
-   ```
-   mkdir build
-   cd build
-   cmake -G "NMake Makefiles" ..
-   ```
-   or
-
-   Configure the project to use the Unified Shared Memory (USM) based implementation.
-   ```
-   mkdir build
-   cd build
-   cmake -G "NMake Makefiles" .. -DUSM=1
-   ```
-
-   > **Note**: When building for FPGAs, the default FPGA family will be used (Intel® Agilex®).
-   > You can change the default target by using the command:
-   >  ```
-   >  cmake -G "NMake Makefiles" .. -DFPGA_DEVICE=<FPGA device family or FPGA part number>
-   >  ``` 
-   >
-   > Alternatively, you can target an explicit FPGA board variant and BSP by using the following command: 
-   >  ```
-   >  cmake -G "NMake Makefiles" .. -DFPGA_DEVICE=<board-support-package>:<board-variant>
-   >  ``` 
-   >
-   > You will only be able to run an executable on the FPGA if you specified a BSP.
-
-#### Build for CPU and GPU
-
-1. Build the program.
-   ```
-   nmake cpu-gpu
-   ```
-2. Clean the program. (Optional)
-   ```
-   nmake clean
-   ```
-
-#### Build for FPGA
-
->**Note**: Compiling to FPGA hardware on Windows* requires a third-party or custom Board Support Package (BSP) with Windows* support.
-
-1. Compile for FPGA emulation.
-   ```
-   nmake fpga_emu
-   ```
-2. Compile for simulation (fast compile time, targets simulator FPGA device):
-   ```
-   nmake fpga_sim
-   ```
-3. Generate HTML performance reports.
-   ```
-   nmake report
-   ```
-The reports reside at `simple-add_report.prj/reports/report.html`.
-
-4. Compile the program for FPGA hardware. (Compiling for hardware can take a long
-time.)
-   ```
-   nmake fpga
-   ```
-
-5. Clean the program. (Optional)
-   ```
-   nmake clean
    ```
 
 #### Troubleshooting
@@ -239,11 +138,11 @@ make VERBOSE=1
 If you receive an error message, troubleshoot the problem using the **Diagnostics Utility for Intel® oneAPI Toolkits**. The diagnostic utility provides configuration and system checks to help find missing dependencies, permissions errors, and other issues. See the [Diagnostics Utility for Intel® oneAPI Toolkits User Guide](https://www.intel.com/content/www/us/en/develop/documentation/diagnostic-utility-user-guide/top.html) for more information on using the utility.
 
 
-## Run the `Base: Vector Add` Program
+## Run the program
 
 ### Configurable Parameters
 
-The source files (`vector-add-buffers.cpp` and `vector-add-usm.cpp`) specify the default vector size of **10000**. You can change the vector size in one or both files if necessary.
+The source files (`vector-add-buffers.cpp`).
 
 ### On Linux
 
@@ -256,61 +155,8 @@ The source files (`vector-add-buffers.cpp` and `vector-add-usm.cpp`) specify the
     ./vector-add-buffers
     ./vector-add-usm
     ```
-#### Run for FPGA
 
-1.  Change to the output directory.
-
-2.  Run for FPGA emulation.
-    ```
-    ./vector-add-buffers.fpga_emu
-    ./vector-add-usm.fpga_emu
-    ```
-3. Run on FPGA simulator.
-   ```
-   CL_CONTEXT_MPSIM_DEVICE_INTELFPGA=1 ./vector-add-buffers.fpga_sim
-   CL_CONTEXT_MPSIM_DEVICE_INTELFPGA=1 ./vector-add-usm.fpga_sim
-   ```
-4. Run on FPGA hardware (only if you ran `cmake` with `-DFPGA_DEVICE=<board-support-package>:<board-variant>`).
-    ```
-    ./vector-add-buffers.fpga
-    ./vector-add-usm.fpga
-    ```
-
-### On Windows
-
-#### Run for CPU and GPU
-
-1. Change to the output directory.
-
-2. Run the program for Unified Shared Memory (USM) and buffers.
-    ```
-    vector-add-usm.exe
-    vector-add-buffers.exe
-    ```
-
-#### Run for FPGA
-
-1.  Change to the output directory.
-
-2.  Run for FPGA emulation.
-    ```
-    vector-add-buffers.fpga_emu.exe
-    vector-add-usm.fpga_emu.exe
-    ```
-3. Run on FPGA simulator.
-   ```
-   set CL_CONTEXT_MPSIM_DEVICE_INTELFPGA=1
-   vector-add-buffers.fpga_sim.exe
-   vector-add-usm.fpga_sim.exe
-   set CL_CONTEXT_MPSIM_DEVICE_INTELFPGA=
-   ```
-4. Run on FPGA hardware (only if you ran `cmake` with `-DFPGA_DEVICE=<board-support-package>:<board-variant>`).
-    ```
-    vector-add-buffers.fpga.exe
-    vector-add-usm.fpga.exe
-    ```
-
-### Build and Run the `Base: Vector Add` Sample in Intel® DevCloud (Optional)
+### Build and Run in Intel® DevCloud
 
 When running a sample in the Intel® DevCloud, you must specify the compute node (CPU, GPU, FPGA) and whether to run in batch or interactive mode.
 
@@ -333,27 +179,27 @@ qsub  -I  -l nodes=1:gpu:ppn=2 -d .
   |GPU	                    |`qsub -l nodes=1:gpu:ppn=2 -d .`
   |CPU	                    |`qsub -l nodes=1:xeon:ppn=2 -d .`
   |FPGA Compile Time         |`qsub -l nodes=1:fpga_compile:ppn=2 -d .`
-  |FPGA Runtime (Arria 10)   |`qsub -l nodes=1:fpga_runtime:arria10:ppn=2 -d .`
+  |FPGA Runtime (Arria 10)   |`qsub -l nodes=1:fpga_runtime:arria10:ppn=2 -d . -b run_100.sh`
 
 
 >**Note**: For more information on how to specify compute nodes, read [Launch and manage jobs](https://devcloud.intel.com/oneapi/documentation/job-submission/) in the Intel® DevCloud for oneAPI Documentation.
 
 Only `fpga_compile` nodes support compiling to FPGA. When compiling for FPGA hardware, increase the job timeout to **24 hours**.
 
-Executing programs on FPGA hardware is only supported on `fpga_runtime` nodes of the appropriate type, such as `fpga_runtime:arria10`.
+Executing programs on FPGA hardware is only supported on `fpga_runtime` nodes of the appropriate type, such as `fpga_runtime:arria10, fpga_runtime:stratix10`.
 
 Neither compiling nor executing programs on FPGA hardware are supported on the login nodes. For more information, see the Intel® DevCloud for oneAPI [*Intel® oneAPI Base Toolkit Get Started*](https://devcloud.intel.com/oneapi/get_started/) page.
 
 
 ## Example Output
 ```
-Running on device:        Intel(R) Gen(R) HD Graphics NEO
-Vector size: 10000
-[0]: 0 + 0 = 0
-[1]: 1 + 1 = 2
-[2]: 2 + 2 = 4
-...
-[9999]: 9999 + 9999 = 19998
+Command: flip, input file: data_in_10k_10k.csv, output file: data_out_10k_10k_fpga.csv
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Reading data from '../in/data_in_10k_10k.csv'
+Preforming data flip
+Computation was 6637.53 milliseconds
+Writing data to '../out/data_out_10k_10k_fpga.csv'
+Computation and I/O was 18407.9 milliseconds
 Vector add successfully completed on device.
 ```
 
