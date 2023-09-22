@@ -1,0 +1,41 @@
+
+########################################################################
+#      Date:           Wed Sep 20 09:05:03 PDT 2023
+#    Job ID:           2375143.v-qsvr-1.aidevcloud
+#      User:           u192003
+# Resources:           cput=75:00:00,neednodes=1:fpga_runtime:stratix10:ppn=2,nodes=1:fpga_runtime:stratix10:ppn=2,walltime=06:00:00
+########################################################################
+
+ 
+:: WARNING: setvars.sh has already been run. Skipping re-execution.
+   To force a re-execution of setvars.sh, use the '--force' option.
+   Using '--force' can result in excessive use of your environment variables.
+  
+usage: source setvars.sh [--force] [--config=file] [--help] [...]
+  --force        Force setvars.sh to re-run, doing so may overload environment.
+  --config=file  Customize env vars using a setvars.sh configuration file.
+  --help         Display this help message and exit.
+  ...            Additional args are passed to individual env/vars.sh scripts
+                 and should follow this script's arguments.
+  
+  Some POSIX shells do not accept command-line options. In that case, you can pass
+  command-line options via the SETVARS_ARGS environment variable. For example:
+  
+  $ SETVARS_ARGS="ia32 --config=config.txt" ; export SETVARS_ARGS
+  $ . path/to/setvars.sh
+  
+  The SETVARS_ARGS environment variable is cleared on exiting setvars.sh.
+  
+Command: flip, input file: data_in_10k_10k.csv, output file: data_out_10k_10k_fpga.csv
+Reading data from '../in/data_in_10k_10k.csv'
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 352577 milliseconds
+Writing data to '../out/data_out_10k_10k_fpga.csv'
+Computation and I/O was 367191 milliseconds
+Vector add successfully completed on device.
+
+########################################################################
+# End of output for job 2375143.v-qsvr-1.aidevcloud
+# Date: Wed Sep 20 09:11:23 PDT 2023
+########################################################################
+

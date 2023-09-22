@@ -27,32 +27,32 @@ bool help = false;                      // If help message needs to print
 constexpr int kMaxStringLen = 40;       // Max filename string legth
 template <int N> class ProducerKernel;  // Forward declare kernel name
 template <int N> class ConsumerKernel;  // Forward declare kernel name
+template <int N> class KernelCompute;  // Forward declare kernel name
 size_t num_repetitions = 1;             // Times to repeat kernel outer loop
 size_t inner_loops = 1;                 // Times to repeat kernel innter loop
 using namespace sycl;                   // SYCL namespace
 
 // PIPE DEFINITIONS
-using ProducerToConsumerPipe = pipe<
+using ProducerToConsumerPipe = ext::intel::pipe<
     class ProducerConsumerPipe,
     size_t,
     1000>;
 
+/*
 event Producer(queue &q, buffer<size_t, 1> &a_buf, size_t width, size_t height) {
-    std::cout << "Starting producer...\n";
-
-    size_t num_repetitions_local = num_repetitions;
+//    std::cout << "Starting producer...\n";
 
     auto e = q.submit([&](handler &h) {
 
         accessor a(a_buf, h, read_only);
 
-        h.single_task<class ProducerKernel<4>>(
+//        for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
+        h.single_task<class ProducerKernel<3>>(
             [=]() [[intel::kernel_args_restrict]] {
 
             size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
 
-            [[intel::loop_coalesce(4)]]
-            for (size_t repetition = 0; repetition < num_repetitions_local; repetition++) {
+            [[intel::loop_coalesce(3)]]
                 for (size_t i = 0; i < height; i++) { // for each row
                     for (size_t j = 0; j < iters_per_row; j++) {
                         #pragma unroll
@@ -62,29 +62,27 @@ event Producer(queue &q, buffer<size_t, 1> &a_buf, size_t width, size_t height) 
                         }
                     }
                 }
-            }
         });
+//        }
     });
 
     return e;
 }
 
 event Consumer(queue &q, buffer<size_t, 1> &b_buf, size_t width, size_t height) {
-    std::cout << "Starting consumer...\n";
-
-    const size_t num_repetitions_local = num_repetitions;
+//    std::cout << "Starting consumer...\n";
 
     auto e = q.submit([&](handler &h) {
 
         accessor b(b_buf, h, write_only, no_init);
 
-        h.single_task<class ConsumerKernel<4>>(
+//        for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
+        h.single_task<class ConsumerKernel<3>>(
             [=]() [[intel::kernel_args_restrict]] {
 
             size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
 
-            [[intel::loop_coalesce(4)]]
-            for (size_t repetition = 0; repetition < num_repetitions_local; repetition++) {
+            [[intel::loop_coalesce(3)]]
                 for (size_t i = 0; i < height; i++) { // for each row
                     for (size_t j = 0; j < iters_per_row; j++) {
                         #pragma unroll
@@ -94,70 +92,73 @@ event Consumer(queue &q, buffer<size_t, 1> &b_buf, size_t width, size_t height) 
                         }
                     }
                 }
-            }
         });
+//        }
     });
 
     return e;
 }
+*/
 
-/*
-void VectorFlip(queue &q, const Vector2D &a_vector, Vector2D &b_vector) {
-    std::vector<size_t> inner_loops_interm;
-    size_t width = a_vector[0].size();
-    size_t height = a_vector.size();
-    std::vector<int> a_interm;
-    std::vector<int> b_interm;
+event VectorFlip(queue &q, buffer<size_t, 1> &a_buf, buffer<size_t, 1> &b_buf, size_t width, size_t height) {
+//    std::vector<size_t> inner_loops_interm;
+//    size_t width = a_vector[0].size();
+//    size_t height = a_vector.size();
+//    std::vector<int> a_interm;
+//    std::vector<int> b_interm;
 
-    for (size_t i = 0; i < height; i++) {
-        for (size_t j = 0; j < width; j++) {
-            a_interm.push_back(a_vector[i][j]);
-        }
-    }
+//    for (size_t i = 0; i < height; i++) {
+//        for (size_t j = 0; j < width; j++) {
+//            a_interm.push_back(a_vector[i][j]);
+//        }
+//    }
 
-    b_interm.resize(a_interm.size());
-    buffer a_buf(a_interm, {property::buffer::mem_channel{1}});
-    buffer b_buf(b_interm, {property::buffer::mem_channel{2}});
-    size_t inner_loops_local = inner_loops;
-    auto start_time_compute = std::chrono::high_resolution_clock::now();
+//    b_interm.resize(a_interm.size());
+//    buffer a_buf(a_interm, {property::buffer::mem_channel{1}});
+//    buffer b_buf(b_interm, {property::buffer::mem_channel{2}});
+//    size_t inner_loops_local = inner_loops;
+//    auto start_time_compute = std::chrono::high_resolution_clock::now();
 
-    for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
-        q.submit([ & ](handler & h) {
+//    for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
+      auto e = q.submit([ & ](handler & h) {
+
             accessor a(a_buf, h, read_only);
             accessor b(b_buf, h, write_only, no_init);
+
             h.single_task<class KernelCompute<3>>(
                 [=]() [[intel::kernel_args_restrict]] {
+
                 size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
+
                 [[intel::loop_coalesce(3)]]
-                for (size_t k = 0; k < inner_loops_local; k++) { // for n number of times
-                    for (size_t i = 0; i < height; i++) { // for each row
-                        for (size_t j = 0; j < iters_per_row; j++) {
-                            #pragma unroll
-                            for (size_t x = 0; x < ELEMENTS_PER_DDR_ACCESS; x++) {
-                                int idx = j * ELEMENTS_PER_DDR_ACCESS + x;
-                                if (idx < width) {
-                                    b[(i * width) + idx] = a[(i * width) + (width - 1) - idx]; // flip
-                                }
-                            }
+                for (size_t i = 0; i < height; i++) { // for each row
+                    for (size_t j = 0; j < iters_per_row; j++) {
+                        #pragma unroll
+                        for (size_t x = 0; x < ELEMENTS_PER_DDR_ACCESS; x++) {
+                            int idx = j * ELEMENTS_PER_DDR_ACCESS + x;
+//                            if (idx < width) {
+                                b[(i * width) + idx] = a[(i * width) + (width - 1) - idx]; // flip
+//                            }
                         }
                     }
                 }
             });
         });
-    }
-    q.wait();
 
-    auto end_time_compute = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> process_time_compute(end_time_compute - start_time_compute);
-    std::cout << "Computation was " << process_time_compute.count() << " milliseconds\n";
+    return e;
 
-    for (size_t i = 0; i < height; i++) {
-        for (size_t j = 0; j < width; j++) {
-            b_vector[i][j] = b_interm[(i*width)+j];;
-        }
-    }
+//    q.wait();
+
+//    auto end_time_compute = std::chrono::high_resolution_clock::now();
+//    std::chrono::duration<double, std::milli> process_time_compute(end_time_compute - start_time_compute);
+//    std::cout << "Computation was " << process_time_compute.count() << " milliseconds\n";
+
+//    for (size_t i = 0; i < height; i++) {
+//        for (size_t j = 0; j < width; j++) {
+//            b_vector[i][j] = b_interm[(i*width)+j];;
+//        }
+//    }
 }
-*/
 
 //************************************
 // Demonstrate vector add both in sequential on CPU and in parallel on device.
@@ -165,7 +166,8 @@ void VectorFlip(queue &q, const Vector2D &a_vector, Vector2D &b_vector) {
 int main(int argc, char * argv[]) {
     char out_file_str_buffer[kMaxStringLen] = {0};
     char in_file_str_buffer[kMaxStringLen] = {0};
-    event producer_event, consumer_event;
+//    event producer_event, consumer_event;
+    event vector_event;
     std::vector<size_t> outdata_flat;
     std::vector<size_t> indata_flat;
     std::string outfilename = "";
@@ -264,9 +266,12 @@ int main(int argc, char * argv[]) {
             buffer producer_buffer(indata_flat, {property::buffer::mem_channel{1}});
             buffer consumer_buffer(outdata_flat, {property::buffer::mem_channel{2}});
 
-            // Run producer/consumer kernels
-            producer_event = Producer(q, producer_buffer, width, height);
-            consumer_event = Consumer(q, consumer_buffer, width, height);
+            for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
+                // Run producer/consumer kernels
+//                producer_event = Producer(q, producer_buffer, width, height);
+//                consumer_event = Consumer(q, consumer_buffer, width, height);
+                vector_event = VectorFlip(q, producer_buffer, consumer_buffer, width, height);
+            }
         }
 
     } catch (exception const & e) {
