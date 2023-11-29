@@ -2,8 +2,11 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <png.h>
 
-using namespace sycl;			// SYCL namespace
+#include "PngImage.hpp"
+
+//using namespace sycl;			// SYCL namespace
 typedef std::vector<std::vector<int>> Vector2D;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -11,7 +14,7 @@ typedef std::vector<std::vector<int>> Vector2D;
 void Help(void);
 bool FindGetArg(std::string &arg, const char *str, int defaultval, int *val);
 bool FindGetArgString(std::string &arg, const char *str, char *str_value, size_t maxchars);
-Vector2D create_blank_2d_vector(Vector2D template_vector);
+img::PNG_PIXEL_RGBA_16_ROWS create_blank_2d_vector(img::PNG_PIXEL_RGBA_16_ROWS template_vector);
 ////////////////////////////////////////////////////////////////////////////////
 
 // Create an exception handler for asynchronous SYCL exceptions
@@ -76,12 +79,29 @@ bool FindGetArgString(std::string & arg,
 	return false;
 }
 
-Vector2D create_blank_2d_vector(Vector2D template_vector) {
-	Vector2D ret;
+img::PNG_PIXEL_RGBA_16_ROWS create_blank_2d_vector(img::PNG_PIXEL_RGBA_16_ROWS template_vector) {
+    img::PNG_PIXEL_RGBA_16_ROWS ret;
+
+    unsigned int height = template_vector.size();
+    unsigned int width  = template_vector[0].size();
+
+    ret.reserve(height);
+
+    for(unsigned int i = 0; i < height; i++) {
+        img::PNG_PIXEL_RGBA_16_ROW row;
+        row.resize(width);
+        ret.push_back(row);
+    }
+
+    return ret;
+
+/*
+	img::PNG_PIXEL_RGBA_16_ROWS ret;
 	for (auto &t: template_vector) { // For each vector in the template
-		std::vector<int> v;	
+		std::vector<img::PNG_PIXEL_RGBA> v;	
 		v.resize(t.size());	 // Create a vector of same size
 		ret.push_back(v);
 	}
 	return ret;
+*/
 }

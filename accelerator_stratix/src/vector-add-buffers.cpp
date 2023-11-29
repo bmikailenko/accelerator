@@ -2,11 +2,15 @@
 #include <vector>
 #include <iostream>
 #include <string>
+#include <cmath>
+#include <png.h>
 #if FPGA_HARDWARE || FPGA_EMULATOR || FPGA_SIMULATOR
 #include <sycl/ext/intel/fpga_extensions.hpp>
 #endif
+
 #include "io.hpp"
 #include "util.hpp"
+#include "PngImage.hpp"
 
 // DEFINITIONS //
 #define ELEMENTS_PER_DDR_ACCESS 16
@@ -25,25 +29,31 @@ typedef std::vector<std::vector<int>> Vector2D;
 // GLOBAL VARIABLES //
 bool help = false;                      // If help message needs to print
 constexpr int kMaxStringLen = 40;       // Max filename string legth
-template <int N> class ProducerKernel;  // Forward declare kernel name
-template <int N> class ConsumerKernel;  // Forward declare kernel name
+template <int N> class ProducerKernel1;  // Forward declare kernel name
+template <int N> class ProducerKernel2;  // Forward declare kernel name
+template <int N> class ConsumerKernel1;  // Forward declare kernel name
+template <int N> class ConsumerKernel2;  // Forward declare kernel name
 size_t num_repetitions = 1;             // Times to repeat kernel outer loop
 size_t inner_loops = 1;                 // Times to repeat kernel innter loop
-using namespace sycl;                   // SYCL namespace
+//using namespace sycl;                   // SYCL namespace
 
 // PIPE DEFINITIONS
-using ProducerToConsumerPipe = ext::intel::pipe<
-    class ProducerConsumerPipe,
-    size_t,
+using ProducerToConsumerPipe1 = sycl::ext::intel::pipe<
+    class ProducerConsumerPipe1,
+    img::PNG_PIXEL_RGBA<unsigned short>,
+    1000>;
+using ProducerToConsumerPipe2 = sycl::ext::intel::pipe<
+    class ProducerConsumerPipe2,
+    img::PNG_PIXEL_RGBA<unsigned short>,
     1000>;
 
-event Producer(queue &q, buffer<size_t, 1> &a_buf, size_t width, size_t height) {
+sycl::event Producer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &a_buf, size_t width, size_t height) {
 
-    auto e = q.submit([&](handler &h) {
+    auto e = q.submit([&](sycl::handler &h) {
 
-        accessor a(a_buf, h, read_only);
+        sycl::accessor a(a_buf, h, sycl::read_only);
 
-        h.single_task<class ProducerKernel<3>>(
+        h.single_task<class ProducerKernel1<3>>(
             [=]() [[intel::kernel_args_restrict]] {
 
             size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
@@ -54,7 +64,7 @@ event Producer(queue &q, buffer<size_t, 1> &a_buf, size_t width, size_t height) 
                     #pragma unroll
                     for (size_t x = 0; x < ELEMENTS_PER_DDR_ACCESS; x++) {
                         size_t idx = j * ELEMENTS_PER_DDR_ACCESS + x;
-                        ProducerToConsumerPipe::write(a[(i * width) + (width - 1) - idx]);
+                        ProducerToConsumerPipe1::write(a[(i * width) + (width - 1) - idx]);
                     }
                 }
             }
@@ -64,13 +74,40 @@ event Producer(queue &q, buffer<size_t, 1> &a_buf, size_t width, size_t height) 
     return e;
 }
 
-event Consumer(queue &q, buffer<size_t, 1> &b_buf, size_t width, size_t height) {
+sycl::event Producer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &a_buf, size_t width, size_t height) {
 
-    auto e = q.submit([&](handler &h) {
+    auto e = q.submit([&](sycl::handler &h) {
 
-        accessor b(b_buf, h, write_only, no_init);
+        sycl::accessor a(a_buf, h, sycl::read_only);
 
-        h.single_task<class ConsumerKernel<3>>(
+        h.single_task<class ProducerKernel2<3>>(
+            [=]() [[intel::kernel_args_restrict]] {
+
+            size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
+
+            [[intel::loop_coalesce(3)]]
+            for (size_t i = 0; i < height; i++) { // for each row
+                for (size_t j = 0; j < iters_per_row; j++) {
+                    #pragma unroll
+                    for (size_t x = 0; x < ELEMENTS_PER_DDR_ACCESS; x++) {
+                        size_t idx = j * ELEMENTS_PER_DDR_ACCESS + x;
+                        ProducerToConsumerPipe2::write(a[(i * width) + (width - 1) - idx]);
+                    }
+                }
+            }
+        });
+    });
+
+    return e;
+}
+
+sycl::event Consumer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &b_buf, size_t width, size_t height) {
+
+    auto e = q.submit([&](sycl::handler &h) {
+
+        sycl::accessor b(b_buf, h, sycl::write_only, sycl::no_init);
+
+        h.single_task<class ConsumerKernel1<3>>(
             [=]() [[intel::kernel_args_restrict]] {
 
             size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
@@ -81,7 +118,34 @@ event Consumer(queue &q, buffer<size_t, 1> &b_buf, size_t width, size_t height) 
                         #pragma unroll
                         for (size_t x = 0; x < ELEMENTS_PER_DDR_ACCESS; x++) {
                             size_t idx = j * ELEMENTS_PER_DDR_ACCESS + x;
-                            b[(i * width) + idx] = ProducerToConsumerPipe::read();
+                            b[(i * width) + idx] = ProducerToConsumerPipe1::read();
+                        }
+                    }
+                }
+        });
+    });
+
+    return e;
+}
+
+sycl::event Consumer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &b_buf, size_t width, size_t height) {
+
+    auto e = q.submit([&](sycl::handler &h) {
+
+        sycl::accessor b(b_buf, h, sycl::write_only, sycl::no_init);
+
+        h.single_task<class ConsumerKernel2<3>>(
+            [=]() [[intel::kernel_args_restrict]] {
+
+            size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
+
+            [[intel::loop_coalesce(3)]]
+                for (size_t i = 0; i < height; i++) { // for each row
+                    for (size_t j = 0; j < iters_per_row; j++) {
+                        #pragma unroll
+                        for (size_t x = 0; x < ELEMENTS_PER_DDR_ACCESS; x++) {
+                            size_t idx = j * ELEMENTS_PER_DDR_ACCESS + x;
+                            b[(i * width) + idx] = ProducerToConsumerPipe2::read();
                         }
                     }
                 }
@@ -95,16 +159,18 @@ event Consumer(queue &q, buffer<size_t, 1> &b_buf, size_t width, size_t height) 
 // Demonstrate vector add both in sequential on CPU and in parallel on device.
 //************************************
 int main(int argc, char * argv[]) {
+//    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> outdata_flat1, outdata_flat2;
+//    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> indata_flat1, indata_flat2;
+    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> outdata_flat;
+    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> indata_flat;
     char out_file_str_buffer[kMaxStringLen] = {0};
     char in_file_str_buffer[kMaxStringLen] = {0};
-    event producer_event, consumer_event;
-    std::vector<size_t> outdata_flat;
-    std::vector<size_t> indata_flat;
+    sycl::event producer_event, consumer_event;
+    img::PNG_PIXEL_RGBA_16_ROWS outdata;
+    img::PNG_PIXEL_RGBA_16_ROWS indata;
     std::string outfilename = "";
     std::string infilename = "";
     std::string command = "";
-    Vector2D outdata;
-    Vector2D indata;
 
     // Create device selector for the device of your interest.
     #if FPGA_EMULATOR
@@ -120,8 +186,6 @@ int main(int argc, char * argv[]) {
     // The default device selector will select the most performant device.
     auto selector = default_selector_v;
     #endif
-
-    bool passed = true;
 
     // Argument processing
     if(argc != 6) {
@@ -161,15 +225,16 @@ int main(int argc, char * argv[]) {
     inner_loops = atoi(argv[5]);
     infilename = std::string(in_file_str_buffer);
     outfilename = std::string(out_file_str_buffer);
+    // End of argument processing
 
+    // Start overall time
     std::cout << "Command: " << command << ", input file: " << infilename << ", output file: " << outfilename << std::endl;
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    passed &= ReadInputData(infilename, indata);
-    if(!passed)
-        std::terminate();
-
+    // PNG Input
+    img::PNG png(std::filesystem::path("../in/" + infilename));
+    indata = png.asRGBA16();
     size_t width = indata[0].size();
     size_t height = indata.size();
 
@@ -177,6 +242,21 @@ int main(int argc, char * argv[]) {
     outdata = create_blank_2d_vector(indata);
 
     // Flatten 2d vectors
+/*
+    for (size_t i = 0; i < height/2; i++) {
+        for (size_t j = 0; j < width; j++) {
+            indata_flat1.push_back(indata[i][j]);
+        }
+    }
+    for (size_t i = height/2; i < height; i++) {
+        for (size_t j = 0; j < width; j++) {
+            indata_flat2.push_back(indata[i+height-1][j]);
+        }
+    }
+    outdata_flat1.resize(indata_flat1.size());
+    outdata_flat2.resize(indata_flat2.size());
+*/
+
     for (size_t i = 0; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
             indata_flat.push_back(indata[i][j]);
@@ -184,46 +264,67 @@ int main(int argc, char * argv[]) {
     }
     outdata_flat.resize(indata_flat.size());
 
+    // Start computation time
     auto start_time_compute = std::chrono::high_resolution_clock::now();
 
     try {
-        queue q(selector, exception_handler);
-        std::cout << "Running on device: " << q.get_device().get_info < info::device::name > () << "\n";
+        sycl::queue q(selector, exception_handler);
+        std::cout << "Running on device: " << q.get_device().get_info < sycl::info::device::name > () << "\n";
 
         if(command.compare("flip") == 0) {
 
             // Create flat vector producer/consumer buffers
-            buffer producer_buffer(indata_flat, {property::buffer::mem_channel{1}});
-            buffer consumer_buffer(outdata_flat, {property::buffer::mem_channel{2}});
+//            sycl::buffer producer_buffer1(indata_flat1, {sycl::property::buffer::mem_channel{1}});
+//            sycl::buffer producer_buffer2(indata_flat2, {sycl::property::buffer::mem_channel{2}});
+//            sycl::buffer consumer_buffer1(outdata_flat1, {sycl::property::buffer::mem_channel{3}});
+//            sycl::buffer consumer_buffer2(outdata_flat2, {sycl::property::buffer::mem_channel{4}});
+            sycl::buffer producer_buffer(indata_flat, {sycl::property::buffer::mem_channel{1}});
+            sycl::buffer consumer_buffer(outdata_flat, {sycl::property::buffer::mem_channel{2}});
 
             for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
                 // Run producer/consumer kernels
-                producer_event = Producer(q, producer_buffer, width, height);
-                consumer_event = Consumer(q, consumer_buffer, width, height);
+//                producer_event = Producer1(q, producer_buffer1, width, outdata_flat1.size()/width);
+//                producer_event = Producer2(q, producer_buffer2, width, outdata_flat2.size()/width);
+//                consumer_event = Consumer1(q, consumer_buffer1, width, outdata_flat1.size()/width);
+//                consumer_event = Consumer2(q, consumer_buffer2, width, outdata_flat2.size()/width);
+                producer_event = Producer1(q, producer_buffer, width, height);
+                consumer_event = Consumer1(q, consumer_buffer, width, height);
             }
         }
 
-    } catch (exception const & e) {
+    } catch (std::exception const & e) {
         std::cout << "An exception is caught for vector add.\n";
         std::terminate();
     }
 
+    // End computation time
     auto end_time_compute = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> process_time_compute(end_time_compute -
                                                                            start_time_compute);
     std::cout << "Computation was " << process_time_compute.count() << " milliseconds\n";
 
     // Unflatten output data
+//    for (size_t i = 0; i < outdata_flat1.size()/width; i++) {
+//        for (size_t j = 0; j < width; j++) {
+//            outdata[i][j] = outdata_flat1[(i*width)+j];;
+//        }
+//    }
+//    for (size_t i = 0; i < outdata_flat2.size(); i++) {
+//        for (size_t j = 0; j < width; j++) {
+//            outdata[i+(height/2)][j] = outdata_flat2[(i*width)+j];;
+//        }
+//    }
     for (size_t i = 0; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
-            outdata[i][j] = outdata_flat[(i*width)+j];;
+            outdata[i][j] = outdata_flat[(i*width)+j];
         }
     }
 
-    passed &= WriteOutputData(outfilename, outdata);
-    if(!passed)
-        std::terminate();
+    // PNG Output
+    png.fromRGBA16(outdata);
+    png.saveToFile(std::filesystem::path("../out/" + outfilename));
 
+    // End overall time
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> process_time(end_time - start_time);
         std::cout << "Computation and I/O was " << process_time.count() << " milliseconds\n";

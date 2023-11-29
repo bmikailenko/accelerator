@@ -125,6 +125,10 @@ add_custom_target(fpga DEPENDS ${FPGA_TARGET})
 set_target_properties(${FPGA_TARGET} PROPERTIES COMPILE_FLAGS "${HARDWARE_COMPILE_FLAGS}")
 set_target_properties(${FPGA_TARGET} PROPERTIES LINK_FLAGS "${HARDWARE_LINK_FLAGS}")
 
+#find_package(PNG REQUIRED)
+#include_directories(${PNG_INCLUDE_DIR})
+#link_libraries(${MY_EXEC} ${PNG_LIBRARY})
+
 # 
 # End of SECTION 2
 #
