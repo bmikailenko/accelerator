@@ -243,10 +243,6 @@ int main(int argc, char * argv[]) {
     // Create 2d output vector
     outdata = create_blank_2d_vector(indata);
 
-    std::cout << "Indata w: " << width << " h: " << height << std::endl;
-    std::cout << "Height/2 = " << height / 2 << std::endl;
-    std::cout << "Size of one element is: " << dynamic_cast<uint64_t*>(indata[0][0]) << std::endl;
-
     // Flatten 2d vectors
     for (size_t i = 0; i < height/2; i++) {
         for (size_t j = 0; j < width; j++) {
