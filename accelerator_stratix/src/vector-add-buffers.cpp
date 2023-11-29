@@ -40,14 +40,14 @@ size_t inner_loops = 1;                 // Times to repeat kernel innter loop
 // PIPE DEFINITIONS
 using ProducerToConsumerPipe1 = sycl::ext::intel::pipe<
     class ProducerConsumerPipe1,
-    img::PNG_PIXEL_RGBA<unsigned short>,
+    img::PNG_PIXEL_RGBA<uint16_t>,
     1000>;
 using ProducerToConsumerPipe2 = sycl::ext::intel::pipe<
     class ProducerConsumerPipe2,
-    img::PNG_PIXEL_RGBA<unsigned short>,
+    img::PNG_PIXEL_RGBA<uint16_t>,
     1000>;
 
-sycl::event Producer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &a_buf, size_t width, size_t height) {
+sycl::event Producer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>, 1> &a_buf, size_t width, size_t height) {
 
     auto e = q.submit([&](sycl::handler &h) {
 
@@ -74,7 +74,7 @@ sycl::event Producer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &a
     return e;
 }
 
-sycl::event Producer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &a_buf, size_t width, size_t height) {
+sycl::event Producer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>, 1> &a_buf, size_t width, size_t height) {
 
     auto e = q.submit([&](sycl::handler &h) {
 
@@ -101,7 +101,7 @@ sycl::event Producer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &a
     return e;
 }
 
-sycl::event Consumer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &b_buf, size_t width, size_t height) {
+sycl::event Consumer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>, 1> &b_buf, size_t width, size_t height) {
 
     auto e = q.submit([&](sycl::handler &h) {
 
@@ -128,7 +128,7 @@ sycl::event Consumer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &b
     return e;
 }
 
-sycl::event Consumer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &b_buf, size_t width, size_t height) {
+sycl::event Consumer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>, 1> &b_buf, size_t width, size_t height) {
 
     auto e = q.submit([&](sycl::handler &h) {
 
@@ -159,13 +159,15 @@ sycl::event Consumer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA_16, 1> &b
 // Demonstrate vector add both in sequential on CPU and in parallel on device.
 //************************************
 int main(int argc, char * argv[]) {
-//    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> outdata_flat1, outdata_flat2;
-//    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> indata_flat1, indata_flat2;
+    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> outdata_flat1, outdata_flat2;
+    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> indata_flat1, indata_flat2;
     std::vector<img::PNG_PIXEL_RGBA<uint16_t>> outdata_flat;
     std::vector<img::PNG_PIXEL_RGBA<uint16_t>> indata_flat;
     char out_file_str_buffer[kMaxStringLen] = {0};
     char in_file_str_buffer[kMaxStringLen] = {0};
-    sycl::event producer_event, consumer_event;
+    sycl::event producer_event1, producer_event2;
+    sycl::event consumer_event1, consumer_event2;
+//    sycl::event producer_event, consumer_event;
     img::PNG_PIXEL_RGBA_16_ROWS outdata;
     img::PNG_PIXEL_RGBA_16_ROWS indata;
     std::string outfilename = "";
@@ -241,8 +243,11 @@ int main(int argc, char * argv[]) {
     // Create 2d output vector
     outdata = create_blank_2d_vector(indata);
 
+    std::cout << "Indata w: " << width << " h: " << height << std::endl;
+    std::cout << "Height/2 = " << height / 2 << std::endl;
+    std::cout << "Size of one element is: " << dynamic_cast<uint64_t*>(indata[0][0]) << std::endl;
+
     // Flatten 2d vectors
-/*
     for (size_t i = 0; i < height/2; i++) {
         for (size_t j = 0; j < width; j++) {
             indata_flat1.push_back(indata[i][j]);
@@ -250,12 +255,11 @@ int main(int argc, char * argv[]) {
     }
     for (size_t i = height/2; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
-            indata_flat2.push_back(indata[i+height-1][j]);
+            indata_flat2.push_back(indata[i][j]);
         }
     }
     outdata_flat1.resize(indata_flat1.size());
     outdata_flat2.resize(indata_flat2.size());
-*/
 
     for (size_t i = 0; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
@@ -274,21 +278,21 @@ int main(int argc, char * argv[]) {
         if(command.compare("flip") == 0) {
 
             // Create flat vector producer/consumer buffers
-//            sycl::buffer producer_buffer1(indata_flat1, {sycl::property::buffer::mem_channel{1}});
-//            sycl::buffer producer_buffer2(indata_flat2, {sycl::property::buffer::mem_channel{2}});
-//            sycl::buffer consumer_buffer1(outdata_flat1, {sycl::property::buffer::mem_channel{3}});
-//            sycl::buffer consumer_buffer2(outdata_flat2, {sycl::property::buffer::mem_channel{4}});
-            sycl::buffer producer_buffer(indata_flat, {sycl::property::buffer::mem_channel{1}});
-            sycl::buffer consumer_buffer(outdata_flat, {sycl::property::buffer::mem_channel{2}});
+            sycl::buffer producer_buffer1(indata_flat1, {sycl::property::buffer::mem_channel{1}});
+            sycl::buffer producer_buffer2(indata_flat2, {sycl::property::buffer::mem_channel{2}});
+            sycl::buffer consumer_buffer1(outdata_flat1, {sycl::property::buffer::mem_channel{3}});
+            sycl::buffer consumer_buffer2(outdata_flat2, {sycl::property::buffer::mem_channel{4}});
+//            sycl::buffer producer_buffer(indata_flat, {sycl::property::buffer::mem_channel{1}});
+//            sycl::buffer consumer_buffer(outdata_flat, {sycl::property::buffer::mem_channel{2}});
 
             for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
                 // Run producer/consumer kernels
-//                producer_event = Producer1(q, producer_buffer1, width, outdata_flat1.size()/width);
-//                producer_event = Producer2(q, producer_buffer2, width, outdata_flat2.size()/width);
-//                consumer_event = Consumer1(q, consumer_buffer1, width, outdata_flat1.size()/width);
-//                consumer_event = Consumer2(q, consumer_buffer2, width, outdata_flat2.size()/width);
-                producer_event = Producer1(q, producer_buffer, width, height);
-                consumer_event = Consumer1(q, consumer_buffer, width, height);
+                producer_event1 = Producer1(q, producer_buffer1, width, indata_flat1.size()/width);
+                producer_event2 = Producer2(q, producer_buffer2, width, indata_flat2.size()/width);
+                consumer_event1 = Consumer1(q, consumer_buffer1, width, indata_flat1.size()/width);
+                consumer_event2 = Consumer2(q, consumer_buffer2, width, indata_flat2.size()/width);
+//                producer_event = Producer1(q, producer_buffer, width, height);
+//                consumer_event = Consumer1(q, consumer_buffer, width, height);
             }
         }
 
@@ -304,21 +308,21 @@ int main(int argc, char * argv[]) {
     std::cout << "Computation was " << process_time_compute.count() << " milliseconds\n";
 
     // Unflatten output data
-//    for (size_t i = 0; i < outdata_flat1.size()/width; i++) {
-//        for (size_t j = 0; j < width; j++) {
-//            outdata[i][j] = outdata_flat1[(i*width)+j];;
-//        }
-//    }
-//    for (size_t i = 0; i < outdata_flat2.size(); i++) {
-//        for (size_t j = 0; j < width; j++) {
-//            outdata[i+(height/2)][j] = outdata_flat2[(i*width)+j];;
-//        }
-//    }
-    for (size_t i = 0; i < height; i++) {
+    for (size_t i = 0; i < height/2; i++) {
         for (size_t j = 0; j < width; j++) {
-            outdata[i][j] = outdata_flat[(i*width)+j];
+            outdata[i][j] = outdata_flat1[(i*width)+j];
         }
     }
+    for (size_t i = height/2; i < height; i++) {
+        for (size_t j = 0; j < width; j++) {
+            outdata[i][j] = outdata_flat2[((i-(height/2))*width)+j];
+        }
+    }
+//    for (size_t i = 0; i < height; i++) {
+//        for (size_t j = 0; j < width; j++) {
+//            outdata[i][j] = outdata_flat[(i*width)+j];
+//        }
+//    }
 
     // PNG Output
     png.fromRGBA16(outdata);
