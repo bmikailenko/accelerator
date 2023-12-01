@@ -44,21 +44,9 @@ static auto exception_handler = [](sycl::exception_list e_list) {
     }
 };
 
-void VectorFlip(queue &q, const std::vector<std::vector<uint64_t>> &a_vector, std::vector<std::vector<uint64_t>> &b_vector) {
-    size_t height = a_vector.size();
-    size_t width = a_vector[0].size();
-    std::vector<uint64_t> a_interm;
-    std::vector<uint64_t> b_interm;
-
-    for (size_t i = 0; i < height; i++) {
-        for (size_t j = 0; j < width; j++) {
-            a_interm.push_back(a_vector[i][j]);
-        }
-    }
-
-    b_interm.resize(a_interm.size());
-    buffer a_buf(a_interm);
-    buffer b_buf(b_interm);
+void VectorFlip(queue &q, const std::vector<uint64_t> &a, std::vector<uint64_t> &b, const size_t width, const size_t height) {
+    buffer a_buf(a);
+    buffer b_buf(b);
     auto start_time_compute_verbose = std::chrono::high_resolution_clock::now();
     for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
         q.submit([ & ](handler & h) {
@@ -132,11 +120,29 @@ bool FindGetArgString(std::string & arg,
     return false;
 }
 
+img::PNG_PIXEL_RGBA_16_ROWS create_blank_2d_vector(img::PNG_PIXEL_RGBA_16_ROWS template_vector) {
+    img::PNG_PIXEL_RGBA_16_ROWS ret;
+
+    unsigned int height = template_vector.size();
+    unsigned int width  = template_vector[0].size();
+
+    ret.reserve(height);
+
+    for(unsigned int i = 0; i < height; i++) {
+        img::PNG_PIXEL_RGBA_16_ROW row;
+        row.resize(width);
+        ret.push_back(row);
+    }
+
+    return ret;
+}
+
 //************************************
 // Demonstrate vector add both in sequential on CPU and in parallel on device.
 //************************************
 int main(int argc, char * argv[]) {
     std::vector<std::vector<uint64_t>> indata_vec, outdata_vec;
+    std::vector<uint64_t> indata_vec_flat, outdata_vec_flat;
     char out_file_str_buffer[kMaxStringLen] = {0};
     char in_file_str_buffer[kMaxStringLen] = {0};
     img::PNG_PIXEL_RGBA_16_ROWS outdata;
@@ -164,7 +170,7 @@ int main(int argc, char * argv[]) {
     if(argc != 5) {
         std::cerr << "Incorrect number of arguments. Correct usage: "
               << argv[0]
-              << " [command] -i=<input-file> -o=<output-file> <# repetitions>"
+              << " [command] -i=<input-file> -o=<output-file> <# repetitions> <# threads>"
               << std::endl;
         return 1;
     }
@@ -204,9 +210,10 @@ int main(int argc, char * argv[]) {
     // PNG Input
     img::PNG png(std::filesystem::path("../in/" + infilename));
     indata = png.asRGBA16();
-
     size_t width = indata[0].size();
     size_t height = indata.size();
+
+    outdata = create_blank_2d_vector(indata);
 
     // Create 2d uint64_t vectors from PNG data
     for (size_t i = 0; i < height; i++) {
@@ -225,6 +232,14 @@ int main(int argc, char * argv[]) {
         outdata_vec.push_back(new_row);
     }
 
+    // Flatten the 2d vectors
+    for (size_t i = 0; i < height; i++) {
+        for (size_t j = 0; j < width; j++) {
+            indata_vec_flat.push_back(indata_vec[i][j]);
+        }
+    }
+    outdata_vec_flat.resize(indata_vec_flat.size());
+
     try {
         queue q(selector, exception_handler);
 
@@ -235,7 +250,7 @@ int main(int argc, char * argv[]) {
 
         if(command.compare("flip") == 0) {
             std::cout << "Preforming data flip\n";
-            VectorFlip(q, indata_vec, outdata_vec);
+            VectorFlip(q, indata_vec_flat, outdata_vec_flat, width, height);
         }
 
         auto end_time_compute = std::chrono::high_resolution_clock::now();
@@ -246,12 +261,12 @@ int main(int argc, char * argv[]) {
         std::cout << "An exception is caught for vector add.\n";
         std::terminate();
     }
-
-
+    std::cout << "W: " << width << " H: " << height << " oudata_vec_flat size: " << outdata_vec_flat.size() << std::endl;
+    std::cout << "Outdata size: " << outdata.size() << std::endl;
     // Convert uint64_t data to PNG output data
     for (size_t i = 0; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
-            uint64_t val = outdata_vec[i][j];
+            uint64_t val = outdata_vec_flat[(i*width)+j];
 
             // Convert uint64_t to PNG_PIXEL_RGBA
             img::PNG_PIXEL_RGBA<uint16_t> tmp;
@@ -275,7 +290,7 @@ int main(int argc, char * argv[]) {
 
     // PNG Output
     png.fromRGBA16(outdata);
-    png.saveToFile(std::filesystem::path("../out/" + outfilename));
+    png.saveToFile(std::filesystem::path("../out/test.png"));
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> process_time(end_time - start_time);
@@ -285,58 +300,3 @@ int main(int argc, char * argv[]) {
     std::cout << "Vector add successfully completed on device.\n";
     return 0;
 }
-
-/*
-bool ReadInputData(std::string infilename, img::PNG_PIXEL_RGBA_16_ROWS &indata) {
-    std::string infilepath = "../in/" + infilename;
-    std::ifstream infile_is;
-    std::string line, val;
-
-    std::cout << "Reading data from '" << infilepath << "'" << std::endl;
-
-    infile_is.open(infilepath);
-    if(infile_is.fail()) {
-        std::cerr << "Failed to open '" << infilepath << "'" << std::endl;
-        return false;
-    }
-
-    while(std::getline(infile_is, line)) {
-        std::vector<int> v;
-        std::stringstream s(line);
-        while(getline(s, val, ','))
-            v.push_back(std::stoi(val));
-        indata.push_back(v);
-    }
-
-    infile_is.close();
-    return true;
-}
-
-bool WriteOutputData(std::string outfilename, img::PNG_PIXEL_RGBA_16_ROWS &outdata) {
-    std::string outfilepath = "../out/" + outfilename;
-    std::ofstream outfile_os;
-    std::string line, val;
-    int i;
-
-    std::cout << "Writing data to '" << outfilepath << "'" << std::endl;
-
-    outfile_os.open(outfilepath);
-    if(outfile_os.fail()) {
-        std::cerr << "Failed to open '" << outfilepath << "'" << std::endl;
-        return false;
-    }
-
-    for(auto &row: outdata) {
-        if(row.size() == 1) {
-            outfile_os << row[0] << '\n';
-        } else {
-            for(i = 0; i < (row.size() - 1); i++)
-                outfile_os << row[i] << ',';
-            outfile_os << row[i] << '\n';
-        }
-    }
-
-    outfile_os.close();
-    return true;
-}
-*/
