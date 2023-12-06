@@ -1,5 +1,19 @@
 # `Accelerator`
+# Quick Start
+```
+cd build
+cmake .. -DFPGA_DEVICE=/opt/intel/oneapi/intel_s10sx_pac:pac_s10
+qsub -l nodes=1:fpga_compile:ppn=2 -d . build.sh
+watch -n 1 qstat -n -1
+```
+> **Note**: Wait for the build command to complete in the watch command (~6 hours)
+```
+qsub -I -l nodes=1:fpga_runtime:stratix10:ppn=2 -d .
+sh run_fpga_test.sh
+```
+> **Note**: If you get a libsycl error, "exit", re-run the qsub command, and rerun the sh. Repeat until program works.
 
+# Detailed Instructions
 ## Prerequisites
 
 | Optimized for                     | Description

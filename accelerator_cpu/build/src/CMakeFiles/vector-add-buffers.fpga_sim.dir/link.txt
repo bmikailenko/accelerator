@@ -1,1 +1,0 @@
-/glob/development-tools/versions/oneapi/2023.1.2/oneapi/compiler/2023.1.0/linux/bin/icpx    -fsycl -fintelfpga -Xssimulation -Xsghdl -Xstarget=Agilex  CMakeFiles/vector-add-buffers.fpga_sim.dir/vector-add-buffers.cpp.o  -o ../vector-add-buffers.fpga_sim 
