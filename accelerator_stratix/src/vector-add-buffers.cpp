@@ -23,9 +23,6 @@
             static const CL_CONSTANT char _format[] = format; \
             sycl::ext::oneapi::experimental::printf(_format, ## __VA_ARGS__); }
 
-// TYPE DEFINITIONS  //
-typedef std::vector<std::vector<int>> Vector2D;
-
 // GLOBAL VARIABLES //
 bool help = false;                      // If help message needs to print
 constexpr int kMaxStringLen = 40;       // Max filename string legth
@@ -34,26 +31,24 @@ template <int N> class ProducerKernel2;  // Forward declare kernel name
 template <int N> class ConsumerKernel1;  // Forward declare kernel name
 template <int N> class ConsumerKernel2;  // Forward declare kernel name
 size_t num_repetitions = 1;             // Times to repeat kernel outer loop
-size_t inner_loops = 1;                 // Times to repeat kernel innter loop
-//using namespace sycl;                   // SYCL namespace
 
 // PIPE DEFINITIONS
 using ProducerToConsumerPipe1 = sycl::ext::intel::pipe<
     class ProducerConsumerPipe1,
-    img::PNG_PIXEL_RGBA<uint16_t>,
+    uint64_t,
     1000>;
 using ProducerToConsumerPipe2 = sycl::ext::intel::pipe<
     class ProducerConsumerPipe2,
-    img::PNG_PIXEL_RGBA<uint16_t>,
+    uint64_t,
     1000>;
 
-sycl::event Producer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>, 1> &a_buf, size_t width, size_t height) {
+sycl::event Producer1(sycl::queue &q, sycl::buffer<uint64_t, 1> &a_buf, size_t width, size_t height) {
 
     auto e = q.submit([&](sycl::handler &h) {
 
         sycl::accessor a(a_buf, h, sycl::read_only);
 
-        h.single_task<class ProducerKernel1<3>>(
+        h.single_task<class ProducerKernel1<1>>(
             [=]() [[intel::kernel_args_restrict]] {
 
             size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
@@ -74,13 +69,13 @@ sycl::event Producer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>
     return e;
 }
 
-sycl::event Producer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>, 1> &a_buf, size_t width, size_t height) {
+sycl::event Producer2(sycl::queue &q, sycl::buffer<uint64_t, 1> &a_buf, size_t width, size_t height) {
 
     auto e = q.submit([&](sycl::handler &h) {
 
         sycl::accessor a(a_buf, h, sycl::read_only);
 
-        h.single_task<class ProducerKernel2<3>>(
+        h.single_task<class ProducerKernel2<2>>(
             [=]() [[intel::kernel_args_restrict]] {
 
             size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
@@ -101,7 +96,7 @@ sycl::event Producer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>
     return e;
 }
 
-sycl::event Consumer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>, 1> &b_buf, size_t width, size_t height) {
+sycl::event Consumer1(sycl::queue &q, sycl::buffer<uint64_t, 1> &b_buf, size_t width, size_t height) {
 
     auto e = q.submit([&](sycl::handler &h) {
 
@@ -128,13 +123,13 @@ sycl::event Consumer1(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>
     return e;
 }
 
-sycl::event Consumer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>, 1> &b_buf, size_t width, size_t height) {
+sycl::event Consumer2(sycl::queue &q, sycl::buffer<uint64_t, 1> &b_buf, size_t width, size_t height) {
 
     auto e = q.submit([&](sycl::handler &h) {
 
         sycl::accessor b(b_buf, h, sycl::write_only, sycl::no_init);
 
-        h.single_task<class ConsumerKernel2<3>>(
+        h.single_task<class ConsumerKernel2<4>>(
             [=]() [[intel::kernel_args_restrict]] {
 
             size_t iters_per_row = (width / 16) + ((width % 16 == 0) ? 0 : 1);
@@ -155,19 +150,15 @@ sycl::event Consumer2(sycl::queue &q, sycl::buffer<img::PNG_PIXEL_RGBA<uint16_t>
     return e;
 }
 
-//************************************
-// Demonstrate vector add both in sequential on CPU and in parallel on device.
-//************************************
 int main(int argc, char * argv[]) {
-    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> outdata_flat1, outdata_flat2;
-    std::vector<img::PNG_PIXEL_RGBA<uint16_t>> indata_flat1, indata_flat2;
     std::vector<img::PNG_PIXEL_RGBA<uint16_t>> outdata_flat;
     std::vector<img::PNG_PIXEL_RGBA<uint16_t>> indata_flat;
+    std::vector<uint64_t> outdata_flat1, outdata_flat2;
+    std::vector<uint64_t> indata_flat1, indata_flat2;
     char out_file_str_buffer[kMaxStringLen] = {0};
     char in_file_str_buffer[kMaxStringLen] = {0};
     sycl::event producer_event1, producer_event2;
     sycl::event consumer_event1, consumer_event2;
-//    sycl::event producer_event, consumer_event;
     img::PNG_PIXEL_RGBA_16_ROWS outdata;
     img::PNG_PIXEL_RGBA_16_ROWS indata;
     std::string outfilename = "";
@@ -190,10 +181,10 @@ int main(int argc, char * argv[]) {
     #endif
 
     // Argument processing
-    if(argc != 6) {
+    if(argc != 5) {
         std::cerr << "Incorrect number of arguments. Correct usage: "
               << argv[0]
-              << " [command] -i=<input file> -o=<output file> <# outer loops> <# inner loops>"
+              << " [command] -i=<input file> -o=<output file> <# times to perform command>"
               << std::endl;
         return 1;
     }
@@ -223,11 +214,10 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
+    // Save parsed arguments
     num_repetitions = atoi(argv[4]);
-    inner_loops = atoi(argv[5]);
     infilename = std::string(in_file_str_buffer);
     outfilename = std::string(out_file_str_buffer);
-    // End of argument processing
 
     // Start overall time
     std::cout << "Command: " << command << ", input file: " << infilename << ", output file: " << outfilename << std::endl;
@@ -235,7 +225,7 @@ int main(int argc, char * argv[]) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     // PNG Input
-    img::PNG png(std::filesystem::path("../in/" + infilename));
+    img::PNG png(std::string("../in/" + infilename));
     indata = png.asRGBA16();
     size_t width = indata[0].size();
     size_t height = indata.size();
@@ -246,12 +236,12 @@ int main(int argc, char * argv[]) {
     // Flatten 2d vectors
     for (size_t i = 0; i < height/2; i++) {
         for (size_t j = 0; j < width; j++) {
-            indata_flat1.push_back(indata[i][j]);
+            indata_flat1.push_back(static_cast<uint64_t>(indata[i][j]));
         }
     }
     for (size_t i = height/2; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
-            indata_flat2.push_back(indata[i][j]);
+            indata_flat2.push_back(static_cast<uint64_t>(indata[i][j]));
         }
     }
     outdata_flat1.resize(indata_flat1.size());
@@ -263,6 +253,9 @@ int main(int argc, char * argv[]) {
         }
     }
     outdata_flat.resize(indata_flat.size());
+
+    size_t height1 = indata_flat1.size()/width;
+    size_t height2 = indata_flat2.size()/width;
 
     // Start computation time
     auto start_time_compute = std::chrono::high_resolution_clock::now();
@@ -278,17 +271,14 @@ int main(int argc, char * argv[]) {
             sycl::buffer producer_buffer2(indata_flat2, {sycl::property::buffer::mem_channel{2}});
             sycl::buffer consumer_buffer1(outdata_flat1, {sycl::property::buffer::mem_channel{3}});
             sycl::buffer consumer_buffer2(outdata_flat2, {sycl::property::buffer::mem_channel{4}});
-//            sycl::buffer producer_buffer(indata_flat, {sycl::property::buffer::mem_channel{1}});
-//            sycl::buffer consumer_buffer(outdata_flat, {sycl::property::buffer::mem_channel{2}});
 
             for (size_t repetition = 0; repetition < num_repetitions; repetition++) {
                 // Run producer/consumer kernels
-                producer_event1 = Producer1(q, producer_buffer1, width, indata_flat1.size()/width);
-                producer_event2 = Producer2(q, producer_buffer2, width, indata_flat2.size()/width);
-                consumer_event1 = Consumer1(q, consumer_buffer1, width, indata_flat1.size()/width);
-                consumer_event2 = Consumer2(q, consumer_buffer2, width, indata_flat2.size()/width);
-//                producer_event = Producer1(q, producer_buffer, width, height);
-//                consumer_event = Consumer1(q, consumer_buffer, width, height);
+                producer_event1 = Producer1(q, producer_buffer1, width, height1);
+                consumer_event1 = Consumer1(q, consumer_buffer1, width, height1);
+                producer_event2 = Producer2(q, producer_buffer2, width, height2);
+                consumer_event2 = Consumer2(q, consumer_buffer2, width, height2);
+                q.wait();
             }
         }
 
@@ -303,26 +293,57 @@ int main(int argc, char * argv[]) {
                                                                            start_time_compute);
     std::cout << "Computation was " << process_time_compute.count() << " milliseconds\n";
 
-    // Unflatten output data
+    // Unflatten top half of output data
     for (size_t i = 0; i < height/2; i++) {
         for (size_t j = 0; j < width; j++) {
-            outdata[i][j] = outdata_flat1[(i*width)+j];
+            uint64_t val = outdata_flat1[(i*width)+j];
+
+            // Convert uint64_t to PNG_PIXEL_RGBA
+            img::PNG_PIXEL_RGBA<uint16_t> tmp;
+            uint16_t r = (uint16_t)(val >> 48);
+            uint16_t g = (uint16_t)(val >> 32) & 0xFFFF;
+            uint16_t b = (uint16_t)(val >> 16) & 0xFFFF;
+            uint16_t a = (uint16_t)(val & 0xFFFF);
+            tmp.data[0] = r;
+            tmp.data[1] = g;
+            tmp.data[2] = b;
+            tmp.data[3] = a;
+            tmp.rgba.r = r;
+            tmp.rgba.g = g;
+            tmp.rgba.b = b;
+            tmp.rgba.a = a;
+
+            outdata[i][j] = tmp;
         }
     }
+
+    // Unflatten bottom half of output data
     for (size_t i = height/2; i < height; i++) {
         for (size_t j = 0; j < width; j++) {
-            outdata[i][j] = outdata_flat2[((i-(height/2))*width)+j];
+            uint64_t val = outdata_flat2[((i-(height/2))*width)+j];
+
+            // Convert uint64_t to PNG_PIXEL_RGBA
+            img::PNG_PIXEL_RGBA<uint16_t> tmp;
+            uint16_t r = (uint16_t)(val >> 48);
+            uint16_t g = (uint16_t)(val >> 32) & 0xFFFF;
+            uint16_t b = (uint16_t)(val >> 16) & 0xFFFF;
+            uint16_t a = (uint16_t)(val & 0xFFFF);
+            tmp.data[0] = r;
+            tmp.data[1] = g;
+            tmp.data[2] = b;
+            tmp.data[3] = a;
+            tmp.rgba.r = r;
+            tmp.rgba.g = g;
+            tmp.rgba.b = b;
+            tmp.rgba.a = a;
+
+            outdata[i][j] = tmp;
         }
     }
-//    for (size_t i = 0; i < height; i++) {
-//        for (size_t j = 0; j < width; j++) {
-//            outdata[i][j] = outdata_flat[(i*width)+j];
-//        }
-//    }
 
     // PNG Output
     png.fromRGBA16(outdata);
-    png.saveToFile(std::filesystem::path("../out/" + outfilename));
+    png.saveToFile(std::string("../out/output.png"));
 
     // End overall time
     auto end_time = std::chrono::high_resolution_clock::now();

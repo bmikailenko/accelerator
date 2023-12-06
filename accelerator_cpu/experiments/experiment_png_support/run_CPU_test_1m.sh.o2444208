@@ -1,0 +1,50 @@
+
+########################################################################
+#      Date:           Wed 06 Dec 2023 08:43:49 AM PST
+#    Job ID:           2444208.v-qsvr-1.aidevcloud
+#      User:           u192003
+# Resources:           cput=75:00:00,neednodes=1:fpga_compile:ppn=2,nodes=1:fpga_compile:ppn=2,walltime=06:00:00
+########################################################################
+
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 637.763 milliseconds
+Computation was 638.813 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 3338.96 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 784786 milliseconds
+Computation was 784791 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 786094 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 770832 milliseconds
+Computation was 770838 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 772165 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 821040 milliseconds
+Computation was 821045 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 822319 milliseconds
+Vector add successfully completed on device.
+
+########################################################################
+# End of output for job 2444208.v-qsvr-1.aidevcloud
+# Date: Wed 06 Dec 2023 09:23:39 AM PST
+########################################################################
+

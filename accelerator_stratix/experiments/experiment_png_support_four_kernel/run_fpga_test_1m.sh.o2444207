@@ -1,0 +1,34 @@
+
+########################################################################
+#      Date:           Wed Dec  6 08:43:10 PST 2023
+#    Job ID:           2444207.v-qsvr-1.aidevcloud
+#      User:           u192003
+# Resources:           cput=75:00:00,neednodes=1:fpga_runtime:stratix10:ppn=2,nodes=1:fpga_runtime:stratix10:ppn=2,walltime=06:00:00
+########################################################################
+
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 7048.14 milliseconds
+Computation and I/O was 7340.55 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 582986 milliseconds
+Computation and I/O was 583279 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 583961 milliseconds
+Computation and I/O was 584292 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 584514 milliseconds
+Computation and I/O was 584812 milliseconds
+Vector add successfully completed on device.
+
+########################################################################
+# End of output for job 2444207.v-qsvr-1.aidevcloud
+# Date: Wed Dec  6 09:12:37 PST 2023
+########################################################################
+

@@ -1,0 +1,239 @@
+
+########################################################################
+#      Date:           Wed 06 Dec 2023 08:22:10 AM PST
+#    Job ID:           2444191.v-qsvr-1.aidevcloud
+#      User:           u192003
+# Resources:           cput=75:00:00,neednodes=1:fpga_compile:ppn=2,nodes=1:fpga_compile:ppn=2,walltime=06:00:00
+########################################################################
+
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 692.979 milliseconds
+Computation was 693.771 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 3453.19 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 243.132 milliseconds
+Computation was 244.293 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 586.797 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 238.13 milliseconds
+Computation was 238.984 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 541.737 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 233.267 milliseconds
+Computation was 234.074 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 534.789 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 895.696 milliseconds
+Computation was 896.9 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 1198.05 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 922.072 milliseconds
+Computation was 923.024 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 1259.63 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 930.209 milliseconds
+Computation was 931.126 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 1262.58 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 3946.31 milliseconds
+Computation was 3948.64 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 4287.51 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 3700.62 milliseconds
+Computation was 3704.1 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 4070.16 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 3728.97 milliseconds
+Computation was 3731.31 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 4066.75 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 6946.93 milliseconds
+Computation was 6951.76 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 7325.97 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 6887.16 milliseconds
+Computation was 6891.65 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 7235.31 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 6172.75 milliseconds
+Computation was 6177.93 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 6518.86 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 15595.9 milliseconds
+Computation was 15601.4 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 15960.5 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 15655.6 milliseconds
+Computation was 15661.1 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 16015.3 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 15667.2 milliseconds
+Computation was 15673.6 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 16062.1 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 30839.6 milliseconds
+Computation was 30845.6 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 31234.7 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 32745.1 milliseconds
+Computation was 32747.7 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 33113.7 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 28873.9 milliseconds
+Computation was 28879.2 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 29258.8 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 46706.8 milliseconds
+Computation was 46712.3 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 47095.7 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 45201.4 milliseconds
+Computation was 45207 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 45610.7 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 44736.3 milliseconds
+Computation was 44741.8 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 45154.6 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 57615.2 milliseconds
+Computation was 57620.8 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 58028.6 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 58230.8 milliseconds
+Computation was 58236.2 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 58646.1 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: Intel(R) Xeon(R) Gold 6128 CPU @ 3.40GHz
+Preforming data flip
+Verbose computation was 62061.9 milliseconds
+Computation was 62067.4 milliseconds
+W: 1920 H: 1080 oudata_vec_flat size: 2073600
+Outdata size: 1080
+Computation and I/O was 62542 milliseconds
+Vector add successfully completed on device.
+
+########################################################################
+# End of output for job 2444191.v-qsvr-1.aidevcloud
+# Date: Wed 06 Dec 2023 08:30:38 AM PST
+########################################################################
+

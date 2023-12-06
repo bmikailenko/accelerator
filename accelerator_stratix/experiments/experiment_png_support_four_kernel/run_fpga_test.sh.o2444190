@@ -1,0 +1,139 @@
+
+########################################################################
+#      Date:           Wed Dec  6 08:20:41 PST 2023
+#    Job ID:           2444190.v-qsvr-1.aidevcloud
+#      User:           u192003
+# Resources:           cput=75:00:00,neednodes=1:fpga_runtime:stratix10:ppn=2,nodes=1:fpga_runtime:stratix10:ppn=2,walltime=06:00:00
+########################################################################
+
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 6998.48 milliseconds
+Computation and I/O was 7323.83 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 548.477 milliseconds
+Computation and I/O was 796.651 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 521.515 milliseconds
+Computation and I/O was 775.121 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 513.747 milliseconds
+Computation and I/O was 766.123 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 1061.97 milliseconds
+Computation and I/O was 1313.34 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 1070.42 milliseconds
+Computation and I/O was 1317.47 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 1082.49 milliseconds
+Computation and I/O was 1331.11 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 3417.97 milliseconds
+Computation and I/O was 3670.34 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 3434.59 milliseconds
+Computation and I/O was 3681.31 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 3421.46 milliseconds
+Computation and I/O was 3665.58 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 6323.64 milliseconds
+Computation and I/O was 6573.94 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 6307.89 milliseconds
+Computation and I/O was 6558.78 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 6321.02 milliseconds
+Computation and I/O was 6574.17 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 15067 milliseconds
+Computation and I/O was 15342.6 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 15052.4 milliseconds
+Computation and I/O was 15305.5 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 15072.4 milliseconds
+Computation and I/O was 15322.6 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 29660.6 milliseconds
+Computation and I/O was 29910 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 29636.1 milliseconds
+Computation and I/O was 29887.2 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 29598.7 milliseconds
+Computation and I/O was 29850.6 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 44151 milliseconds
+Computation and I/O was 44400.3 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 44207 milliseconds
+Computation and I/O was 44457.6 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 44163.4 milliseconds
+Computation and I/O was 44416.4 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 58718.3 milliseconds
+Computation and I/O was 58971.9 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 58781.9 milliseconds
+Computation and I/O was 59027.7 milliseconds
+Vector add successfully completed on device.
+Command: flip, input file: test3.png, output file: 
+Running on device: pac_s10 : Intel PAC Platform (pac_ee00000)
+Computation was 58900 milliseconds
+Computation and I/O was 59146.1 milliseconds
+Vector add successfully completed on device.
+
+########################################################################
+# End of output for job 2444190.v-qsvr-1.aidevcloud
+# Date: Wed Dec  6 08:29:05 PST 2023
+########################################################################
+
