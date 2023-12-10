@@ -2,7 +2,9 @@
 # Quick Start
 ```
 cd build
+qsub -I -l nodes=1:fpga_compile:ppn=2 -d .
 cmake .. -DFPGA_DEVICE=/opt/intel/oneapi/intel_s10sx_pac:pac_s10
+exit
 qsub -l nodes=1:fpga_compile:ppn=2 -d . build.sh
 watch -n 1 qstat -n -1
 ```
