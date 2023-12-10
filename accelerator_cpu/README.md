@@ -3,9 +3,9 @@
 # Quick Start
 ```
 cd build
+qsub -I -l nodes=1:xeon:ppn=2 -d .
 cmake ..
 make cpu-gpu
-qsub -I -l nodes=1:xeon:ppn=2 -d .
 ```
 > **Note**: If the xeon qsub command doesn't launch quickly, run instead "qsub -I -l nodes=1:fpga_compile:ppn=2 -d ."
 ```
